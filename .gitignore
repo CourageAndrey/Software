@@ -1,0 +1,10 @@
+*.vs
+*.sln.DotSettings.user
+*/*.csproj.user
+*/bin
+*/obj
+packages
+.claude
+.cursorrules
+.vscode
+TestResults
