@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="1.0.0" />
     <ProjectReference Include="..\Software.Core\Software.Core.csproj" />
   </ItemGroup>
 
