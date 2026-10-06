@@ -5,8 +5,69 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Software.WebBrowser"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Web Browser" Height="800" Width="1280" MinHeight="450" MinWidth="760"
+        Background="#F3F4F6" FontFamily="Segoe UI" Closed="Window_Closed" PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <Style x:Key="TabButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="TabBorder" Background="#E8ECEF" BorderBrush="#D1D5DB" BorderThickness="0,0,1,1" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#F3F4F6" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="White" />
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="0,0,1,0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
-
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Background="#E8ECEF">
+            <Button x:Name="NewTabButton" DockPanel.Dock="Right" Style="{StaticResource TabButton}" Content="&#xE710;"
+                    Margin="6" Click="NewTab_Click" ToolTip="New tab" AutomationProperties.Name="New tab" />
+            <ListBox x:Name="TabStrip" Background="Transparent" BorderThickness="0" SelectionMode="Single"
+                     SelectionChanged="TabStrip_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False"
+                     AutomationProperties.Name="Browser tabs">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Width="180">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource TabButton}" Content="&#xE711;" Tag="{Binding}"
+                                    Click="CloseTab_Click" ToolTip="Close tab" AutomationProperties.Name="Close tab" />
+                            <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" Margin="0,0,6,0" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+        <Grid x:Name="TabHost" Grid.Row="1" />
     </Grid>
 </Window>
