@@ -2,6 +2,7 @@
   <Project Path="Software.Archiver/Software.Archiver.csproj" />
   <Project Path="Software.Core/Software.Core.csproj" />
   <Project Path="Software.FileCommander/Software.FileCommander.csproj" />
+  <Project Path="Software.MergeTool/Software.MergeTool.csproj" />
   <Project Path="Software.UnitTests/Software.UnitTests.csproj" />
   <Project Path="Software.WebBrowser/Software.WebBrowser.csproj" />
 </Solution>
