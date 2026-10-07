@@ -1,10 +1,7 @@
 ﻿<Window x:Class="Software.TextProcessor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Software.TextProcessor"
-        mc:Ignorable="d"
         Title="Text Processor" Height="880" Width="1180" MinHeight="550" MinWidth="940"
         FontFamily="Segoe UI" Background="#F3F4F6" Loaded="Window_Loaded" Closing="Window_Closing"
         PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
