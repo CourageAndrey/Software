@@ -17,7 +17,22 @@ namespace Software.FileCommander
 			_activePane = LeftPane;
 			LeftPane.Activated += ActivatePane;
 			RightPane.Activated += ActivatePane;
+			LeftPane.CommandRequested += Pane_CommandRequested;
+			RightPane.CommandRequested += Pane_CommandRequested;
 			ActivatePane(LeftPane);
+		}
+
+		private async void Pane_CommandRequested(FilePane pane, string command)
+		{
+			ActivatePane(pane);
+			if (command == "Refresh")
+			{
+				await Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
+			}
+			else
+			{
+				await ExecuteAsync(command);
+			}
 		}
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)

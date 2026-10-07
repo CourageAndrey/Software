@@ -32,6 +32,7 @@
 			</DockPanel>
 			<ListView x:Name="FileList" Grid.Row="1" SelectionMode="Extended" BorderThickness="0,1,0,1" BorderBrush="#D1D5DB"
 						MouseDoubleClick="File_DoubleClick" KeyDown="File_KeyDown" SelectionChanged="Selection_Changed"
+						ContextMenuOpening="File_ContextMenuOpening"
 						ScrollViewer.HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="Files">
 				<ListView.View>
 					<GridView>

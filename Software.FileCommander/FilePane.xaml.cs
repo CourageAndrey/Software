@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -22,6 +23,8 @@ namespace Software.FileCommander
 		public bool IsFileListFocused => FileList.IsKeyboardFocusWithin;
 		public string[] SelectedPaths => FileList.SelectedItems.Cast<FileEntry>().Select(entry => entry.FullPath).ToArray();
 		public event Action<FilePane>? Activated;
+		/// <summary>Raised with "Rename" or "NewFolder" for the app's own commands, or "Refresh" after a shell command that may change files.</summary>
+		public event Action<FilePane, string>? CommandRequested;
 
 		public bool IsActive
 		{
@@ -174,6 +177,114 @@ namespace Software.FileCommander
 			}
 		}
 
+		private async void File_ContextMenuOpening(object sender, ContextMenuEventArgs eventArgs)
+		{
+			// Scroll bars and column headers keep their own menus.
+			var origin = eventArgs.OriginalSource as DependencyObject;
+			if (IsInside<ScrollBar>(origin) || IsInside<GridViewColumnHeader>(origin))
+			{
+				return;
+			}
+
+			eventArgs.Handled = true;
+			if (CurrentPath.Length == 0 || Window.GetWindow(this) is not Window owner)
+			{
+				return;
+			}
+
+			bool fromKeyboard = eventArgs.CursorLeft < 0 || eventArgs.CursorTop < 0;
+			bool background;
+			if (fromKeyboard)
+			{
+				background = FileList.SelectedItems.Count == 0;
+			}
+			else
+			{
+				background = ItemsControl.ContainerFromElement(FileList, origin) is not ListViewItem;
+				if (background)
+				{
+					FileList.UnselectAll();
+				}
+			}
+
+			Point point;
+			if (!fromKeyboard)
+			{
+				point = FileList.PointToScreen(Mouse.GetPosition(FileList));
+			}
+			else if (!background && (Keyboard.FocusedElement as ListViewItem
+				?? FileList.ItemContainerGenerator.ContainerFromItem(FileList.SelectedItem) as ListViewItem) is ListViewItem anchor)
+			{
+				point = anchor.PointToScreen(new Point(20, anchor.ActualHeight));
+			}
+			else
+			{
+				point = FileList.PointToScreen(new Point(20, 20));
+			}
+
+			string[] paths = SelectedPaths;
+			string? openFolder = null;
+			string? verb;
+			try
+			{
+				verb = background
+					? ShellContextMenu.ShowBackground(owner, CurrentPath, point, chosen => chosen.Equals("NewFolder", StringComparison.OrdinalIgnoreCase))
+					: ShellContextMenu.Show(owner, paths, point, chosen =>
+					{
+						if (chosen.Equals("rename", StringComparison.OrdinalIgnoreCase))
+						{
+							return true;
+						}
+
+						// Opening a folder navigates inside the pane, as Explorer does in its own window.
+						if (chosen.Equals("open", StringComparison.OrdinalIgnoreCase) && paths.Length == 1 && Directory.Exists(paths[0]))
+						{
+							openFolder = paths[0];
+							return true;
+						}
+						return false;
+					});
+			}
+			catch (Exception exception)
+			{
+				PaneStatus.Text = $"Context menu command failed: {exception.Message}";
+				return;
+			}
+
+			if (verb == null)
+			{
+				return;
+			}
+
+			if (openFolder != null)
+			{
+				await NavigateAsync(openFolder);
+				FocusList();
+			}
+			else
+			{
+				// Rename and New folder use the app's own name prompt, since Explorer's in-place editing needs its window.
+				CommandRequested?.Invoke(this, verb.ToLowerInvariant() switch
+				{
+					"rename" => "Rename",
+					"newfolder" => "NewFolder",
+					_ => "Refresh"
+				});
+			}
+		}
+
+		private static bool IsInside<T>(DependencyObject? element) where T : DependencyObject
+		{
+			for (; element != null; element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
+			{
+				if (element is T)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		private void Header_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (eventArgs.OriginalSource is not GridViewColumnHeader { Content: string heading })
@@ -209,4 +320,4 @@ namespace Software.FileCommander
 
 		private void UpdateStatus() => PaneStatus.Text = $"{FileList.Items.Count} items | {FileList.SelectedItems.Count} selected";
 	}
-}
+}
