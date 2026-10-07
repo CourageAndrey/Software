@@ -4,6 +4,7 @@
   <Project Path="Software.FileCommander/Software.FileCommander.csproj" />
   <Project Path="Software.MergeTool/Software.MergeTool.csproj" />
   <Project Path="Software.Notepad/Software.Notepad.csproj" />
+  <Project Path="Software.TextProcessor/Software.TextProcessor.csproj" />
   <Project Path="Software.UnitTests/Software.UnitTests.csproj" />
   <Project Path="Software.WebBrowser/Software.WebBrowser.csproj" />
 </Solution>
