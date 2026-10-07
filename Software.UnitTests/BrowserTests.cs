@@ -44,9 +44,14 @@ namespace Software.UnitTests
 			{
 				DependencyObject child = VisualTreeHelper.GetChild(parent, index);
 				if (child is TElement element)
+				{
 					yield return element;
+				}
+
 				foreach (var descendant in Descendants<TElement>(child))
+				{
 					yield return descendant;
+				}
 			}
 		}
 
@@ -62,7 +67,9 @@ namespace Software.UnitTests
 		public void AddingTabsSelectsTheNewTabWithoutTheOldFourPanelLimit()
 		{
 			for (int index = 0; index < 5; index++)
+			{
 				AddTab();
+			}
 
 			Assert.That(Tabs, Has.Length.EqualTo(6));
 			Assert.That(TabStrip.SelectedItem, Is.SameAs(Tabs[^1]));
@@ -151,7 +158,9 @@ namespace Software.UnitTests
 				void OnCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs eventArgs)
 				{
 					if (browser.CoreWebView2.Source == "about:blank" && eventArgs.IsSuccess)
+					{
 						completion.TrySetResult();
+					}
 				}
 
 				browser.CoreWebView2.NavigationCompleted += OnCompleted;

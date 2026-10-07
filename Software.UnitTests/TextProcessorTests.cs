@@ -40,7 +40,10 @@ namespace Software.UnitTests
 			Assert.That(range.GetPropertyValue(TextElement.FontWeightProperty), Is.EqualTo(FontWeights.Bold));
 			Assert.That(range.GetPropertyValue(TextElement.FontStyleProperty), Is.EqualTo(FontStyles.Italic));
 			Assert.That(paragraph.TextAlignment, Is.EqualTo(TextAlignment.Center));
-			if (extension == ".docx") AssertValidDocx(path);
+			if (extension == ".docx")
+			{
+				AssertValidDocx(path);
+			}
 		}
 
 		[Test]

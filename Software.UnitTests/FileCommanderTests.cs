@@ -47,9 +47,13 @@ namespace Software.UnitTests
 			File.WriteAllText(Path.Combine(folder, "nested", "child.txt"), "nested content");
 
 			if (move)
+			{
 				FileOperations.Move([file, folder], _destination);
+			}
 			else
+			{
 				FileOperations.Copy([file, folder], _destination);
+			}
 
 			Assert.That(File.ReadAllText(Path.Combine(_destination, "file.txt")), Is.EqualTo("file content"));
 			Assert.That(File.ReadAllText(Path.Combine(_destination, "folder", "nested", "child.txt")), Is.EqualTo("nested content"));
@@ -70,9 +74,13 @@ namespace Software.UnitTests
 			Assert.Throws<IOException>(() =>
 			{
 				if (move)
+				{
 					FileOperations.Move([first, second], _destination);
+				}
 				else
+				{
 					FileOperations.Copy([first, second], _destination);
+				}
 			});
 			Assert.That(File.Exists(Path.Combine(_destination, "first.txt")), Is.False);
 			Assert.That(File.Exists(first), Is.True);

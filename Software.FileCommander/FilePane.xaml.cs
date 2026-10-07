@@ -52,7 +52,9 @@ namespace Software.FileCommander
 				string fullPath = Path.GetFullPath(path, CurrentPath.Length == 0 ? Environment.CurrentDirectory : CurrentPath);
 				var entries = await Task.Run(() => FileOperations.ReadDirectory(fullPath));
 				if (version != _navigationVersion)
+				{
 					return;
+				}
 
 				CurrentPath = fullPath;
 				PathBox.Text = fullPath;
@@ -61,7 +63,10 @@ namespace Software.FileCommander
 				FileList.ItemsSource = entries;
 				ApplySort();
 				foreach (var entry in entries.Where(entry => selection.Contains(entry.FullPath, StringComparer.OrdinalIgnoreCase)))
+				{
 					FileList.SelectedItems.Add(entry);
+				}
+
 				_updatingDrive = true;
 				DriveSelector.SelectedItem = Path.GetPathRoot(fullPath);
 				_updatingDrive = false;
@@ -102,7 +107,9 @@ namespace Software.FileCommander
 		private async void Drive_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			if (!_updatingDrive && DriveSelector.SelectedItem is string root)
+			{
 				await NavigateAsync(root);
+			}
 		}
 
 		private async void Up_Click(object sender, RoutedEventArgs eventArgs) => await GoUpAsync();
@@ -110,7 +117,9 @@ namespace Software.FileCommander
 		private async Task GoUpAsync()
 		{
 			if (CurrentPath.Length > 0 && Directory.GetParent(CurrentPath) is DirectoryInfo parent)
+			{
 				await NavigateAsync(parent.FullName);
+			}
 		}
 
 		private async void Refresh_Click(object sender, RoutedEventArgs eventArgs) => await RefreshAsync();
@@ -118,7 +127,9 @@ namespace Software.FileCommander
 		private async void File_DoubleClick(object sender, MouseButtonEventArgs eventArgs)
 		{
 			if (ItemsControl.ContainerFromElement(FileList, eventArgs.OriginalSource as DependencyObject) is ListViewItem)
+			{
 				await OpenSelectedAsync();
+			}
 		}
 
 		private async void File_KeyDown(object sender, KeyEventArgs eventArgs)
@@ -138,7 +149,10 @@ namespace Software.FileCommander
 		private async Task OpenSelectedAsync()
 		{
 			if (FileList.SelectedItem is not FileEntry entry)
+			{
 				return;
+			}
+
 			if (entry.IsDirectory)
 			{
 				await NavigateAsync(entry.FullPath);
@@ -160,7 +174,10 @@ namespace Software.FileCommander
 		private void Header_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (eventArgs.OriginalSource is not GridViewColumnHeader { Content: string heading })
+			{
 				return;
+			}
+
 			string property = heading switch
 			{
 				"Name" => nameof(FileEntry.Name),

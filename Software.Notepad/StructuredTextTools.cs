@@ -24,7 +24,10 @@ namespace Software.Notepad
 			using var document = ParseJson(text);
 			using var output = new MemoryStream();
 			using (var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Indented = !compact }))
+			{
 				WriteJson(document.RootElement, writer, sortKeys);
+			}
+
 			return Encoding.UTF8.GetString(output.ToArray());
 		}
 
@@ -40,7 +43,10 @@ namespace Software.Notepad
 			var results = JsonPath.Parse(expression).Evaluate(node);
 			var matches = results.Matches.Take(MaximumTreeNodes + 1).ToArray();
 			if (matches.Length > MaximumTreeNodes)
+			{
 				throw new InvalidOperationException("The query returned too many results.");
+			}
+
 			return JoinResults(matches.Select(match => $"{match.Location}\n{match.Value?.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) ?? "null"}"));
 		}
 
@@ -53,7 +59,10 @@ namespace Software.Notepad
 			StructureNode Build(JsonElement element, string label, string path)
 			{
 				if (++count > MaximumTreeNodes)
+				{
 					throw new InvalidOperationException("The tree exceeds the 10,000-node limit.");
+				}
+
 				var children = element.ValueKind switch
 				{
 					JsonValueKind.Object => element.EnumerateObject().Select(property =>
@@ -81,7 +90,9 @@ namespace Software.Notepad
 				if (space != "preserve" && element.Elements().Any() && !element.Nodes().OfType<XText>().Any(node => !string.IsNullOrWhiteSpace(node.Value)))
 				{
 					foreach (var whitespace in element.Nodes().OfType<XText>().Where(node => node is not XCData && string.IsNullOrWhiteSpace(node.Value)).ToArray())
+					{
 						whitespace.Remove();
+					}
 				}
 			}
 			var output = new StringBuilder();
@@ -89,7 +100,10 @@ namespace Software.Notepad
 			{
 				Indent = !compact, IndentChars = "  ", OmitXmlDeclaration = true, NewLineHandling = NewLineHandling.None
 			}))
+			{
 				document.WriteTo(writer);
+			}
+
 			string declaration = document.Declaration?.ToString() ?? "";
 			return declaration + (declaration.Length > 0 && !compact ? Environment.NewLine : "") + output;
 		}
@@ -107,7 +121,10 @@ namespace Software.Notepad
 			schemas.Add(null, reader);
 			schemas.Compile();
 			if (messages.Count == 0)
+			{
 				document.Validate(schemas, (_, eventArgs) => messages.Add(eventArgs.Message));
+			}
+
 			return messages.ToArray();
 		}
 
@@ -117,10 +134,16 @@ namespace Software.Notepad
 			var navigator = document.CreateNavigator();
 			var namespaces = new XmlNamespaceManager(navigator.NameTable);
 			foreach (var attribute in document.Root!.Attributes().Where(attribute => attribute.IsNamespaceDeclaration))
+			{
 				namespaces.AddNamespace(attribute.Name.LocalName == "xmlns" ? "d" : attribute.Name.LocalName, attribute.Value);
+			}
+
 			object result = navigator.Evaluate(expression, namespaces);
 			if (result is not XPathNodeIterator nodes)
+			{
 				return Convert.ToString(result, CultureInfo.InvariantCulture) ?? "";
+			}
+
 			return JoinResults(Values());
 
 			IEnumerable<string> Values()
@@ -129,7 +152,10 @@ namespace Software.Notepad
 				while (nodes.MoveNext())
 				{
 					if (++count > MaximumTreeNodes)
+					{
 						throw new InvalidOperationException("The query returned too many results.");
+					}
+
 					yield return nodes.Current!.NodeType is XPathNodeType.Element or XPathNodeType.Root ? nodes.Current.OuterXml : nodes.Current.Value;
 				}
 			}
@@ -144,14 +170,20 @@ namespace Software.Notepad
 			StructureNode Build(XElement element, string parent)
 			{
 				if (++count > MaximumTreeNodes)
+				{
 					throw new InvalidOperationException("The tree exceeds the 10,000-node limit.");
+				}
+
 				int position = element.ElementsBeforeSelf().Count(sibling => sibling.Name == element.Name) + 1;
 				string path = parent + $"/*[local-name()={XPathLiteral(element.Name.LocalName)} and namespace-uri()={XPathLiteral(element.Name.NamespaceName)}][{position}]";
 				var children = element.Elements().Select(child => Build(child, path)).ToList();
 				foreach (var attribute in element.Attributes().Where(attribute => !attribute.IsNamespaceDeclaration))
 				{
 					if (++count > MaximumTreeNodes)
+					{
 						throw new InvalidOperationException("The tree exceeds the 10,000-node limit.");
+					}
+
 					children.Insert(0, new StructureNode($"@{attribute.Name.LocalName}: {Shorten(attribute.Value)}",
 						path + $"/@*[local-name()={XPathLiteral(attribute.Name.LocalName)} and namespace-uri()={XPathLiteral(attribute.Name.NamespaceName)}]", []));
 				}
@@ -169,7 +201,9 @@ namespace Software.Notepad
 				while (check.Read())
 				{
 					if (check.Depth > MaximumDepth)
+					{
 						throw new XmlException("XML nesting exceeds the 128-level limit.");
+					}
 				}
 			}
 			using var reader = XmlReader.Create(new StringReader(text), ReaderSettings());
@@ -198,14 +232,19 @@ namespace Software.Notepad
 				foreach (var property in element.EnumerateObject())
 				{
 					if (!names.Add(property.Name))
+					{
 						throw new JsonException($"Duplicate JSON property: {property.Name}");
+					}
+
 					RejectDuplicateKeys(property.Value);
 				}
 			}
 			else if (element.ValueKind == JsonValueKind.Array)
 			{
 				foreach (var item in element.EnumerateArray())
+				{
 					RejectDuplicateKeys(item);
+				}
 			}
 		}
 
@@ -225,11 +264,16 @@ namespace Software.Notepad
 			{
 				writer.WriteStartArray();
 				foreach (var item in element.EnumerateArray())
+				{
 					WriteJson(item, writer, sortKeys);
+				}
+
 				writer.WriteEndArray();
 			}
 			else
+			{
 				element.WriteTo(writer);
+			}
 		}
 
 		private static string JoinResults(IEnumerable<string> values)
@@ -238,9 +282,15 @@ namespace Software.Notepad
 			foreach (string value in values)
 			{
 				if (result.Length + (long)value.Length + 4 > MaximumCharacters)
+				{
 					throw new InvalidOperationException("Query output exceeds the 2 Mi-character limit.");
+				}
+
 				if (result.Length > 0)
+				{
 					result.AppendLine().AppendLine();
+				}
+
 				result.Append(value);
 			}
 			return result.ToString();
@@ -249,7 +299,9 @@ namespace Software.Notepad
 		private static void CheckSize(string text)
 		{
 			if (text.Length > MaximumCharacters)
+			{
 				throw new InvalidOperationException("XML/JSON tools support at most 2 Mi characters per document.");
+			}
 		}
 
 		private static string Shorten(string value) => value.Length <= 100 ? value : value[..100] + "...";
@@ -257,9 +309,15 @@ namespace Software.Notepad
 		private static string XPathLiteral(string value)
 		{
 			if (!value.Contains('\''))
+			{
 				return "'" + value + "'";
+			}
+
 			if (!value.Contains('"'))
+			{
 				return "\"" + value + "\"";
+			}
+
 			return "concat(" + string.Join(",\"'\",", value.Split('\'').Select(part => "'" + part + "'")) + ")";
 		}
 	}

@@ -35,11 +35,17 @@ namespace Software.Archiver
 		{
 			string output = Path.GetFullPath(outputPath);
 			if (!Path.GetExtension(output).Equals(".zip", StringComparison.OrdinalIgnoreCase))
+			{
 				throw new ArgumentException("New archives must use the .zip extension.");
+			}
+
 			EnsureMissing(output);
 			string parent = Path.GetDirectoryName(output)!;
 			if (!Directory.Exists(parent))
+			{
 				throw new DirectoryNotFoundException("The output folder does not exist.");
+			}
+
 			EnsureNoLinksOnPath(parent);
 
 			var entries = new List<(string Path, string Name, bool Directory)>();
@@ -51,14 +57,22 @@ namespace Software.Archiver
 				bool directory = (File.GetAttributes(fullSource) & FileAttributes.Directory) != 0;
 				if (fullSource.Equals(output, StringComparison.OrdinalIgnoreCase)
 					|| (directory && output.StartsWith(fullSource + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+				{
 					throw new IOException("The output archive must be outside the selected folders and must not be an input file.");
+				}
+
 				string rootName = Path.GetFileName(fullSource);
 				if (rootName.Length == 0)
+				{
 					throw new IOException("Add folders within a drive instead of the drive root.");
+				}
+
 				AddSource(fullSource, rootName);
 			}
 			if (entries.Count == 0)
+			{
 				throw new ArgumentException("Add at least one file or folder.");
+			}
 
 			string temporary = Path.Combine(parent, $".Software.Archiver-{Guid.NewGuid():N}.tmp");
 			try
@@ -74,7 +88,10 @@ namespace Software.Archiver
 						var entry = zip.CreateEntry(source.Directory ? source.Name + "/" : source.Name, compression);
 						DateTime modified = File.GetLastWriteTime(source.Path);
 						if (modified.Year is >= 1980 and <= 2107)
+						{
 							entry.LastWriteTime = new DateTimeOffset(modified);
+						}
+
 						if (!source.Directory)
 						{
 							using var input = File.OpenRead(source.Path);
@@ -90,7 +107,9 @@ namespace Software.Archiver
 			finally
 			{
 				if (File.Exists(temporary))
+				{
 					File.Delete(temporary);
+				}
 			}
 
 			void AddSource(string path, string name)
@@ -98,18 +117,29 @@ namespace Software.Archiver
 				cancellationToken.ThrowIfCancellationRequested();
 				FileAttributes attributes = File.GetAttributes(path);
 				if ((attributes & FileAttributes.ReparsePoint) != 0)
+				{
 					throw new IOException("Symbolic links and junctions cannot be added to an archive.");
+				}
+
 				string normalized = ValidateEntryName(name);
 				if (!names.Add(normalized))
+				{
 					throw new IOException($"Multiple inputs would create the same archive entry: {normalized}");
+				}
+
 				if (entries.Count >= MaximumEntries)
+				{
 					throw new IOException($"An archive may contain at most {MaximumEntries:N0} entries.");
+				}
+
 				bool directory = (attributes & FileAttributes.Directory) != 0;
 				entries.Add((path, normalized, directory));
 				if (directory)
 				{
 					foreach (string child in Directory.EnumerateFileSystemEntries(path))
+					{
 						AddSource(child, normalized + "/" + Path.GetFileName(child));
+					}
 				}
 			}
 		}
@@ -119,11 +149,17 @@ namespace Software.Archiver
 			long maximumBytes = MaximumExtractedBytes)
 		{
 			if (maximumBytes < 0)
+			{
 				throw new ArgumentOutOfRangeException(nameof(maximumBytes));
+			}
+
 			string root = Path.GetFullPath(destination);
 			EnsureNoLinksOnPath(root);
 			if (File.Exists(root))
+			{
 				throw new IOException("The extraction destination is a file.");
+			}
+
 			using var archive = ArchiveFactory.Open(archivePath, new ReaderOptions { Password = password });
 			var allEntries = GetArchiveEntries(archive, archivePath, cancellationToken);
 			var selected = selectedNames?.Select(ValidateEntryName).ToHashSet(StringComparer.Ordinal);
@@ -132,7 +168,9 @@ namespace Software.Archiver
 			var entries = allEntries.Where(entry => selected == null || selected.Contains(ValidateEntryName(entry.Key ?? ""))
 				|| selectedDirectories.Any(directory => ValidateEntryName(entry.Key ?? "").StartsWith(directory + "/", StringComparison.Ordinal))).ToArray();
 			if (entries.Length == 0)
+			{
 				throw new InvalidDataException("There are no entries to extract.");
+			}
 
 			var plan = new Dictionary<string, ExtractionEntry>(StringComparer.OrdinalIgnoreCase);
 			long declaredBytes = 0;
@@ -142,31 +180,48 @@ namespace Software.Archiver
 				if (!string.IsNullOrEmpty(entry.LinkTarget)
 					|| (archive.Type == ArchiveType.Zip && entry.Attrib is int attributes && ((attributes & (int)FileAttributes.ReparsePoint) != 0
 						|| (((uint)attributes >> 16) & 0xF000) == 0xA000)))
+				{
 					throw new InvalidDataException("Archive links are not supported.");
+				}
+
 				if (entry.IsEncrypted && string.IsNullOrEmpty(password))
+				{
 					throw new InvalidDataException("This archive requires a password.");
+				}
+
 				string name = ValidateEntryName(entry.Key ?? "");
 				string target = Path.GetFullPath(Path.Combine(root, name.Replace('/', Path.DirectorySeparatorChar)));
 				string prefix = Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar;
 				if (!target.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+				{
 					throw new InvalidDataException("An archive entry points outside the extraction folder.");
+				}
+
 				EnsureNoLinksOnPath(target);
 				if (plan.TryGetValue(target, out var prior))
 				{
 					if (prior.IsDirectory && entry.IsDirectory)
+					{
 						continue;
+					}
+
 					throw new InvalidDataException($"Duplicate archive path: {name}");
 				}
 				if (entry.IsDirectory)
 				{
 					if (File.Exists(target))
+					{
 						throw new IOException($"A file blocks an archive folder: {target}");
+					}
 				}
 				else
 				{
 					EnsureMissing(target);
 					if (entry.Size < 0 || entry.Size > maximumBytes - declaredBytes)
+					{
 						throw new InvalidDataException($"Extraction exceeds the {maximumBytes:N0}-byte safety limit.");
+					}
+
 					declaredBytes += entry.Size;
 				}
 				plan.Add(target, entry);
@@ -178,7 +233,9 @@ namespace Software.Archiver
 					parent = Path.GetDirectoryName(parent))
 				{
 					if (File.Exists(parent) || (plan.TryGetValue(parent, out var parentEntry) && !parentEntry.IsDirectory))
+					{
 						throw new InvalidDataException($"A file blocks an archive folder: {parent}");
+					}
 				}
 			}
 
@@ -191,7 +248,9 @@ namespace Software.Archiver
 				cancellationToken.ThrowIfCancellationRequested();
 				EnsureNoLinksOnPath(target);
 				if (entry.IsDirectory)
+				{
 					Directory.CreateDirectory(target);
+				}
 				else
 				{
 					Directory.CreateDirectory(Path.GetDirectoryName(target)!);
@@ -205,12 +264,17 @@ namespace Software.Archiver
 							CopyStream(input, output, cancellationToken, ref extractedBytes, maximumBytes);
 						}
 						if (entry.LastModifiedTime is DateTime modified && modified.Year >= 1601)
+						{
 							File.SetLastWriteTime(target, modified);
+						}
 					}
 					catch
 					{
 						if (created)
+						{
 							File.Delete(target);
+						}
+
 						throw;
 					}
 				}
@@ -239,12 +303,21 @@ namespace Software.Archiver
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (++count > MaximumEntries)
+				{
 					throw new InvalidDataException("The TAR archive exceeds the entry safety limit.");
+				}
+
 				if (entry.EntryType is not (TarEntryType.RegularFile or TarEntryType.V7RegularFile or TarEntryType.Directory))
+				{
 					throw new InvalidDataException("TAR links and special filesystem entries are not supported.");
+				}
+
 				bool directory = entry.EntryType == TarEntryType.Directory;
 				if (directory && entry.Name.TrimEnd('/') == ".")
+				{
 					continue;
+				}
+
 				long offset = entry.DataOffset;
 				long length = entry.Length;
 				entries.Add(new ExtractionEntry(entry.Name, directory, length, length, entry.ModificationTime.LocalDateTime,
@@ -278,10 +351,16 @@ namespace Software.Archiver
 			public override int Read(byte[] buffer, int offset, int count)
 			{
 				if (_remaining == 0)
+				{
 					return 0;
+				}
+
 				int read = _source.Read(buffer, offset, (int)Math.Min(count, _remaining));
 				if (read == 0)
+				{
 					throw new EndOfStreamException("TAR entry data is incomplete.");
+				}
+
 				_remaining -= read;
 				return read;
 			}
@@ -289,7 +368,10 @@ namespace Software.Archiver
 			protected override void Dispose(bool disposing)
 			{
 				if (disposing)
+				{
 					_source.Dispose();
+				}
+
 				base.Dispose(disposing);
 			}
 		}
@@ -298,7 +380,10 @@ namespace Software.Archiver
 		{
 			var entries = archive.Entries.Take(MaximumEntries + 1).ToArray();
 			if (entries.Length > MaximumEntries)
+			{
 				throw new InvalidDataException($"The archive exceeds the {MaximumEntries:N0}-entry safety limit.");
+			}
+
 			return entries.Where(entry => !(entry.IsDirectory && entry.Key?.Replace('\\', '/').TrimEnd('/') == ".")).ToArray();
 		}
 
@@ -306,9 +391,15 @@ namespace Software.Archiver
 		{
 			string normalized = name.Replace('\\', '/').TrimEnd('/');
 			while (normalized.StartsWith("./", StringComparison.Ordinal))
+			{
 				normalized = normalized[2..];
+			}
+
 			if (normalized.Length == 0 || normalized.StartsWith('/') || Path.IsPathRooted(normalized))
+			{
 				throw new InvalidDataException($"Unsafe archive path: {name}");
+			}
+
 			string[] parts = normalized.Split('/');
 			foreach (string part in parts)
 			{
@@ -317,7 +408,9 @@ namespace Software.Archiver
 					|| (stem.Length == 4 && (stem.StartsWith("COM") || stem.StartsWith("LPT")) && stem[3] is >= '1' and <= '9');
 				if (part.Length == 0 || part is "." or ".." || part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
 					|| part.EndsWith('.') || part.EndsWith(' ') || reserved)
+				{
 					throw new InvalidDataException($"Unsafe archive path: {name}");
+				}
 			}
 			return normalized;
 		}
@@ -329,7 +422,9 @@ namespace Software.Archiver
 				try
 				{
 					if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+					{
 						throw new IOException("Archive operations through symbolic links or junctions are not supported.");
+					}
 				}
 				catch (FileNotFoundException) { }
 				catch (DirectoryNotFoundException) { }
@@ -339,7 +434,9 @@ namespace Software.Archiver
 		private static void EnsureMissing(string path)
 		{
 			if (File.Exists(path) || Directory.Exists(path))
+			{
 				throw new IOException($"An item already exists: {path}. Existing items are never overwritten.");
+			}
 		}
 
 		private static void CopyStream(Stream input, Stream output, CancellationToken cancellationToken, ref long totalBytes, long maximumBytes)
@@ -350,7 +447,10 @@ namespace Software.Archiver
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				if (count > maximumBytes - totalBytes)
+				{
 					throw new InvalidDataException($"Extraction exceeds the {maximumBytes:N0}-byte safety limit.");
+				}
+
 				output.Write(buffer, 0, count);
 				totalBytes += count;
 			}

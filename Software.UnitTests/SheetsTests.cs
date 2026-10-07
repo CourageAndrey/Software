@@ -210,9 +210,19 @@ namespace Software.UnitTests
 
 		private static TextBox? FindTextBox(DependencyObject element)
 		{
-			if (element is TextBox input) return input;
+			if (element is TextBox input)
+			{
+				return input;
+			}
+
 			for (int index = 0; index < VisualTreeHelper.GetChildrenCount(element); index++)
-				if (FindTextBox(VisualTreeHelper.GetChild(element, index)) is TextBox child) return child;
+			{
+				if (FindTextBox(VisualTreeHelper.GetChild(element, index)) is TextBox child)
+				{
+					return child;
+				}
+			}
+
 			return null;
 		}
 		private void RunOnDispatcher(Func<Task> action)

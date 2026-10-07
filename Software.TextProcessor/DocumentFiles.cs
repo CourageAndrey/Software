@@ -30,18 +30,27 @@ namespace Software.TextProcessor
 		public static LoadedDocument Open(string path)
 		{
 			if (new FileInfo(path).Length > MaximumFileBytes)
+			{
 				throw new InvalidDataException("Choose documents of 20 MiB or less.");
+			}
+
 			string extension = Path.GetExtension(path).ToLowerInvariant();
 			var document = NewDocument();
 			switch (extension)
 			{
 				case ".rtf":
 					using (var input = File.OpenRead(path))
+					{
 						new TextRange(document.ContentStart, document.ContentEnd).Load(input, DataFormats.Rtf);
+					}
+
 					return new LoadedDocument(document, null);
 				case ".txt":
 					using (var reader = new StreamReader(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
+					{
 						AddText(document, reader.ReadToEnd());
+					}
+
 					return new LoadedDocument(document, "Plain-text files are saved as UTF-8. Formatting requires RTF or DOCX.");
 				case ".doc":
 					using (var input = File.OpenRead(path))
@@ -60,9 +69,13 @@ namespace Software.TextProcessor
 						foreach (var block in body.ChildElements)
 						{
 							if (block is W.Paragraph paragraph)
+							{
 								AddWordParagraph(document.Blocks, paragraph, main);
+							}
 							else if (block is W.Table table)
+							{
 								document.Blocks.Add(ReadTable(table, main));
+							}
 						}
 					}
 					return new LoadedDocument(document, "DOCX import preserves common text formatting, lists, tables, and embedded images. Advanced Word layout, headers/footers, styles, and revisions may not be retained.");
@@ -76,20 +89,30 @@ namespace Software.TextProcessor
 			string output = Path.GetFullPath(path);
 			string extension = Path.GetExtension(output).ToLowerInvariant();
 			if (extension is not (".rtf" or ".txt" or ".docx"))
+			{
 				throw new NotSupportedException("Save as RTF, TXT, or DOCX. Legacy DOC is import-only.");
+			}
+
 			if (File.Exists(output) && !overwrite)
+			{
 				throw new IOException("The destination already exists.");
+			}
+
 			string temporary = Path.Combine(Path.GetDirectoryName(output)!, $".Software.TextProcessor-{Guid.NewGuid():N}.tmp");
 			try
 			{
 				if (extension == ".docx")
+				{
 					WriteDocx(temporary, document);
+				}
 				else
 				{
 					using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
 					var range = new TextRange(document.ContentStart, document.ContentEnd);
 					if (extension == ".rtf")
+					{
 						range.Save(stream, DataFormats.Rtf);
+					}
 					else
 					{
 						using var writer = new StreamWriter(stream, new UTF8Encoding(false, true));
@@ -97,33 +120,47 @@ namespace Software.TextProcessor
 					}
 				}
 				if (overwrite && File.Exists(output))
+				{
 					File.Replace(temporary, output, null);
+				}
 				else
+				{
 					File.Move(temporary, output);
+				}
 			}
 			finally
 			{
 				if (File.Exists(temporary))
+				{
 					File.Delete(temporary);
+				}
 			}
 		}
 
 		private static void AddText(FlowDocument document, string text)
 		{
 			foreach (string line in text.Split(["\r\n", "\r", "\n"], StringSplitOptions.None))
+			{
 				document.Blocks.Add(new Paragraph(new Run(line)) { Margin = new Thickness(0, 0, 0, 4) });
+			}
 		}
 
 		private static void ValidatePackage(string path)
 		{
 			using var zip = System.IO.Compression.ZipFile.OpenRead(path);
 			if (zip.Entries.Count > 10_000)
+			{
 				throw new InvalidDataException("The DOCX contains too many package entries.");
+			}
+
 			long total = 0;
 			foreach (var entry in zip.Entries)
 			{
 				if (entry.Length > _maximumExpandedBytes - total)
+				{
 					throw new InvalidDataException("The DOCX exceeds the 100 MiB expanded-size limit.");
+				}
+
 				total += entry.Length;
 			}
 		}
@@ -142,9 +179,14 @@ namespace Software.TextProcessor
 				int level = numbering.NumberingLevelReference?.Val?.Value ?? 0;
 				var format = definition?.Elements<W.Level>().FirstOrDefault(item => item.LevelIndex?.Value == level)?.NumberingFormat?.Val?.Value;
 				if (format == W.NumberFormatValues.Decimal)
+				{
 					marker = TextMarkerStyle.Decimal;
+				}
+
 				if (blocks.LastBlock is System.Windows.Documents.List prior && prior.MarkerStyle == marker)
+				{
 					prior.ListItems.Add(new ListItem(paragraph));
+				}
 				else
 				{
 					var list = new System.Windows.Documents.List { MarkerStyle = marker };
@@ -153,16 +195,28 @@ namespace Software.TextProcessor
 				}
 			}
 			else
+			{
 				blocks.Add(paragraph);
+			}
 		}
 
 		private static Paragraph ReadParagraph(W.Paragraph source, MainDocumentPart main)
 		{
 			var paragraph = new Paragraph { Margin = new Thickness(0, 0, 0, 8) };
 			var alignment = source.ParagraphProperties?.Justification?.Val?.Value;
-			if (alignment == W.JustificationValues.Center) paragraph.TextAlignment = TextAlignment.Center;
-			else if (alignment == W.JustificationValues.Right) paragraph.TextAlignment = TextAlignment.Right;
-			else if (alignment == W.JustificationValues.Both) paragraph.TextAlignment = TextAlignment.Justify;
+			if (alignment == W.JustificationValues.Center)
+			{
+				paragraph.TextAlignment = TextAlignment.Center;
+			}
+			else if (alignment == W.JustificationValues.Right)
+			{
+				paragraph.TextAlignment = TextAlignment.Right;
+			}
+			else if (alignment == W.JustificationValues.Both)
+			{
+				paragraph.TextAlignment = TextAlignment.Justify;
+			}
+
 			foreach (var wordRun in source.Descendants<W.Run>())
 			{
 				var properties = wordRun.RunProperties;
@@ -177,20 +231,48 @@ namespace Software.TextProcessor
 						_ => null
 					};
 					if (inline == null)
+					{
 						continue;
+					}
+
 					if (properties != null)
 					{
-						if (properties.Bold != null && properties.Bold.Val?.Value != false) inline.FontWeight = FontWeights.Bold;
-						if (properties.Italic != null && properties.Italic.Val?.Value != false) inline.FontStyle = FontStyles.Italic;
-						if (properties.Underline != null && properties.Underline.Val?.Value != W.UnderlineValues.None) inline.TextDecorations = TextDecorations.Underline;
-						if (properties.Strike != null && properties.Strike.Val?.Value != false) inline.TextDecorations = TextDecorations.Strikethrough;
+						if (properties.Bold != null && properties.Bold.Val?.Value != false)
+						{
+							inline.FontWeight = FontWeights.Bold;
+						}
+
+						if (properties.Italic != null && properties.Italic.Val?.Value != false)
+						{
+							inline.FontStyle = FontStyles.Italic;
+						}
+
+						if (properties.Underline != null && properties.Underline.Val?.Value != W.UnderlineValues.None)
+						{
+							inline.TextDecorations = TextDecorations.Underline;
+						}
+
+						if (properties.Strike != null && properties.Strike.Val?.Value != false)
+						{
+							inline.TextDecorations = TextDecorations.Strikethrough;
+						}
+
 						if (double.TryParse(properties.FontSize?.Val?.Value, System.Globalization.CultureInfo.InvariantCulture, out double size) && size is >= 2 and <= 400)
+						{
 							inline.FontSize = size * 2 / 3;
+						}
+
 						string? font = properties.RunFonts?.Ascii?.Value;
-						if (!string.IsNullOrEmpty(font)) inline.FontFamily = new FontFamily(font);
+						if (!string.IsNullOrEmpty(font))
+						{
+							inline.FontFamily = new FontFamily(font);
+						}
+
 						string? color = properties.Color?.Val?.Value;
 						if (color?.Length == 6 && int.TryParse(color, System.Globalization.NumberStyles.HexNumber, null, out int rgb))
+						{
 							inline.Foreground = new SolidColorBrush(Color.FromRgb((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb));
+						}
 					}
 					paragraph.Inlines.Add(inline);
 				}
@@ -202,7 +284,10 @@ namespace Software.TextProcessor
 		{
 			string? relationship = drawing.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().FirstOrDefault()?.Embed?.Value;
 			if (relationship == null || main.GetPartById(relationship) is not ImagePart part)
+			{
 				return new Run("[Unsupported image]");
+			}
+
 			try
 			{
 				using var stream = part.GetStream();
@@ -237,8 +322,15 @@ namespace Software.TextProcessor
 				{
 					var targetCell = new TableCell { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1), Padding = new Thickness(5) };
 					foreach (var paragraph in cell.Elements<W.Paragraph>())
+					{
 						targetCell.Blocks.Add(ReadParagraph(paragraph, main));
-					if (targetCell.Blocks.Count == 0) targetCell.Blocks.Add(new Paragraph());
+					}
+
+					if (targetCell.Blocks.Count == 0)
+					{
+						targetCell.Blocks.Add(new Paragraph());
+					}
+
 					targetRow.Cells.Add(targetCell);
 				}
 				group.Rows.Add(targetRow);
@@ -264,9 +356,13 @@ namespace Software.TextProcessor
 			foreach (Block block in blocks)
 			{
 				if (block is Paragraph paragraph)
+				{
 					parent.Append(WriteParagraph(paragraph, main, ref imageId));
+				}
 				else if (block is Section section)
+				{
 					WriteBlocks(section.Blocks, parent, main, ref imageId);
+				}
 				else if (block is System.Windows.Documents.List list)
 				{
 					int numberId = CreateNumbering(main, list);
@@ -305,7 +401,11 @@ namespace Software.TextProcessor
 							{
 								var targetCell = new W.TableCell();
 								WriteBlocks(cell.Blocks, targetCell, main, ref imageId);
-								if (targetCell.LastChild is not W.Paragraph) targetCell.Append(new W.Paragraph());
+								if (targetCell.LastChild is not W.Paragraph)
+								{
+									targetCell.Append(new W.Paragraph());
+								}
+
 								targetRow.Append(targetCell);
 							}
 							target.Append(targetRow);
@@ -314,7 +414,9 @@ namespace Software.TextProcessor
 					parent.Append(target);
 				}
 				else
+				{
 					parent.Append(new W.Paragraph(new W.Run(new W.Text(new TextRange(block.ContentStart, block.ContentEnd).Text))));
+				}
 			}
 		}
 
@@ -329,7 +431,15 @@ namespace Software.TextProcessor
 				new W.LevelText { Val = numbered ? "%1." : "\u2022" }) { LevelIndex = 0 };
 			var definition = new W.AbstractNum(level) { AbstractNumberId = id };
 			var firstInstance = part.Numbering.Elements<W.NumberingInstance>().FirstOrDefault();
-			if (firstInstance == null) part.Numbering.Append(definition); else part.Numbering.InsertBefore(definition, firstInstance);
+			if (firstInstance == null)
+			{
+				part.Numbering.Append(definition);
+			}
+			else
+			{
+				part.Numbering.InsertBefore(definition, firstInstance);
+			}
+
 			part.Numbering.Append(new W.NumberingInstance(new W.AbstractNumId { Val = id }) { NumberID = id });
 			return id;
 		}
@@ -359,31 +469,63 @@ namespace Software.TextProcessor
 				}
 				var properties = new W.RunProperties(new W.RunFonts { Ascii = inline.FontFamily.Source, HighAnsi = inline.FontFamily.Source },
 					new W.FontSize { Val = Math.Round(inline.FontSize * 1.5).ToString(System.Globalization.CultureInfo.InvariantCulture) });
-				if (inline.FontWeight.ToOpenTypeWeight() >= 600) properties.AddChild(new W.Bold(), true);
-				if (inline.FontStyle == FontStyles.Italic) properties.AddChild(new W.Italic(), true);
-				if (inline.TextDecorations.Contains(TextDecorations.Underline[0])) properties.AddChild(new W.Underline { Val = W.UnderlineValues.Single }, true);
-				if (inline.TextDecorations.Contains(TextDecorations.Strikethrough[0])) properties.AddChild(new W.Strike(), true);
+				if (inline.FontWeight.ToOpenTypeWeight() >= 600)
+				{
+					properties.AddChild(new W.Bold(), true);
+				}
+
+				if (inline.FontStyle == FontStyles.Italic)
+				{
+					properties.AddChild(new W.Italic(), true);
+				}
+
+				if (inline.TextDecorations.Contains(TextDecorations.Underline[0]))
+				{
+					properties.AddChild(new W.Underline { Val = W.UnderlineValues.Single }, true);
+				}
+
+				if (inline.TextDecorations.Contains(TextDecorations.Strikethrough[0]))
+				{
+					properties.AddChild(new W.Strike(), true);
+				}
+
 				if (inline.Foreground is SolidColorBrush foreground)
+				{
 					properties.AddChild(new W.Color { Val = $"{foreground.Color.R:X2}{foreground.Color.G:X2}{foreground.Color.B:X2}" }, true);
+				}
+
 				var run = new W.Run(properties);
 				if (inline is Run text)
 				{
 					string[] lines = text.Text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
 					for (int index = 0; index < lines.Length; index++)
 					{
-						if (index > 0) run.Append(new W.Break());
+						if (index > 0)
+						{
+							run.Append(new W.Break());
+						}
+
 						string[] tabs = lines[index].Split('\t');
 						for (int tab = 0; tab < tabs.Length; tab++)
 						{
-							if (tab > 0) run.Append(new W.TabChar());
+							if (tab > 0)
+							{
+								run.Append(new W.TabChar());
+							}
+
 							run.Append(new W.Text(tabs[tab]) { Space = SpaceProcessingModeValues.Preserve });
 						}
 					}
 				}
 				else if (inline is LineBreak)
+				{
 					run.Append(new W.Break());
+				}
 				else if (inline is InlineUIContainer { Child: Image image } && image.Source is BitmapSource bitmap)
+				{
 					run.Append(WriteImage(image, bitmap, main, ++imageId));
+				}
+
 				paragraph.Append(run);
 			}
 		}

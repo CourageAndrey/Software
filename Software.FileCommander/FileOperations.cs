@@ -34,7 +34,9 @@ namespace Software.FileCommander
 		{
 			string targetDirectory = Path.GetFullPath(destination);
 			if (!Directory.Exists(targetDirectory))
+			{
 				throw new DirectoryNotFoundException("The destination folder does not exist.");
+			}
 
 			var plannedTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var plan = sources.Select(source =>
@@ -43,18 +45,29 @@ namespace Software.FileCommander
 				FileAttributes attributes = File.GetAttributes(fullSource);
 				bool directory = (attributes & FileAttributes.Directory) != 0;
 				if ((attributes & FileAttributes.ReparsePoint) != 0)
+				{
 					throw new IOException("Transfers of symbolic links and junctions are not supported.");
+				}
+
 				string name = Path.GetFileName(fullSource);
 				if (string.IsNullOrEmpty(name))
+				{
 					throw new IOException("A drive root cannot be transferred.");
+				}
 
 				string target = Path.Combine(targetDirectory, name);
 				if (fullSource.Equals(target, StringComparison.OrdinalIgnoreCase)
 					|| (directory && target.StartsWith(fullSource + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+				{
 					throw new IOException("A folder cannot be transferred into itself, and source and destination must differ.");
+				}
+
 				EnsureMissing(target);
 				if (!plannedTargets.Add(target))
+				{
 					throw new IOException($"Multiple selected items have the same destination: {name}");
+				}
+
 				if (directory)
 				{
 					EnsureRegularTree(fullSource);
@@ -68,14 +81,22 @@ namespace Software.FileCommander
 				if (item.Directory)
 				{
 					if (move)
+					{
 						FileSystem.MoveDirectory(item.Source, item.Target, overwrite: false);
+					}
 					else
+					{
 						FileSystem.CopyDirectory(item.Source, item.Target, overwrite: false);
+					}
 				}
 				else if (move)
+				{
 					FileSystem.MoveFile(item.Source, item.Target, overwrite: false);
+				}
 				else
+				{
 					FileSystem.CopyFile(item.Source, item.Target, overwrite: false);
+				}
 			}
 		}
 
@@ -87,16 +108,23 @@ namespace Software.FileCommander
 			string target = Path.Combine(parent, newName);
 			EnsureMissing(target);
 			if (Directory.Exists(fullSource))
+			{
 				Directory.Move(fullSource, target);
+			}
 			else
+			{
 				File.Move(fullSource, target);
+			}
 		}
 
 		public static void CreateFolder(string parent, string name)
 		{
 			ValidateName(name);
 			if (!Directory.Exists(parent))
+			{
 				throw new DirectoryNotFoundException("The parent folder does not exist.");
+			}
+
 			string path = Path.Combine(parent, name);
 			EnsureMissing(path);
 			Directory.CreateDirectory(path);
@@ -107,9 +135,13 @@ namespace Software.FileCommander
 			foreach (string source in sources)
 			{
 				if (Directory.Exists(source))
+				{
 					FileSystem.DeleteDirectory(source, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.ThrowException);
+				}
 				else
+				{
 					FileSystem.DeleteFile(source, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.ThrowException);
+				}
 			}
 		}
 
@@ -117,13 +149,17 @@ namespace Software.FileCommander
 		{
 			if (string.IsNullOrWhiteSpace(name) || name is "." or ".." || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
 				|| name.EndsWith('.') || name.EndsWith(' '))
+			{
 				throw new ArgumentException("Enter a valid file or folder name, without a path or trailing spaces or dots.");
+			}
 		}
 
 		private static void EnsureMissing(string path)
 		{
 			if (File.Exists(path) || Directory.Exists(path))
+			{
 				throw new IOException($"An item already exists: {path}. Existing items are never overwritten.");
+			}
 		}
 
 		private static void EnsureRegularTree(string directory)
@@ -132,9 +168,14 @@ namespace Software.FileCommander
 			{
 				FileAttributes attributes = File.GetAttributes(entry);
 				if ((attributes & FileAttributes.ReparsePoint) != 0)
+				{
 					throw new IOException("Folders containing symbolic links or junctions cannot be transferred.");
+				}
+
 				if ((attributes & FileAttributes.Directory) != 0)
+				{
 					EnsureRegularTree(entry);
+				}
 			}
 		}
 
@@ -143,7 +184,9 @@ namespace Software.FileCommander
 			for (DirectoryInfo? directory = new(path); directory != null; directory = directory.Parent)
 			{
 				if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+				{
 					throw new IOException("Folder transfers through symbolic links or junctions are not supported.");
+				}
 			}
 		}
 	}

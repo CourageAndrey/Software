@@ -98,17 +98,35 @@ namespace Software.Notepad
 		{
 			string extension = Path.GetExtension(path ?? "").ToLowerInvariant();
 			if (extension is ".xml" or ".xsd" or ".xsl" or ".xslt" or ".svg" or ".config" or ".xaml")
+			{
 				return "XML";
+			}
+
 			if (extension == ".json")
+			{
 				return "JSON";
+			}
+
 			if (extension == ".cs")
+			{
 				return "C#";
+			}
+
 			if (extension is ".js" or ".mjs")
+			{
 				return "JavaScript";
+			}
+
 			if (extension == ".css")
+			{
 				return "CSS";
+			}
+
 			if (extension is ".htm" or ".html")
+			{
 				return "HTML";
+			}
+
 			string trimmed = text.TrimStart();
 			return trimmed.StartsWith('<') ? "XML" : trimmed.StartsWith('{') || trimmed.StartsWith('[') ? "JSON" : "Text";
 		}
@@ -141,18 +159,24 @@ namespace Software.Notepad
 						characterOffset += Encoding.UTF8.GetCharCount(bytes.AsSpan(previousByte, tokenByte - previousByte));
 						previousByte = tokenByte;
 						if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+						{
 							starts.Push(characterOffset);
+						}
 						else if (reader.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray)
 						{
 							int start = starts.Pop();
 							if (Document.GetLineByOffset(start).LineNumber != Document.GetLineByOffset(characterOffset).LineNumber)
+							{
 								folds.Add(new NewFolding(start, characterOffset + 1));
+							}
 						}
 					}
 					_folding.UpdateFoldings(folds.OrderBy(item => item.StartOffset), -1);
 				}
 				else
+				{
 					_folding.UpdateFoldings([], -1);
+				}
 			}
 			catch (Exception exception) when (exception is JsonException or System.Xml.XmlException or InvalidOperationException)
 			{
@@ -178,7 +202,10 @@ namespace Software.Notepad
 			string fullPath = System.IO.Path.GetFullPath(path);
 			using var input = File.OpenRead(fullPath);
 			if (input.Length > MaximumBytes)
+			{
 				throw new InvalidDataException("Files larger than 20 MiB are not supported.");
+			}
+
 			using var memory = new MemoryStream();
 			input.CopyTo(memory);
 			byte[] bytes = memory.ToArray();
@@ -191,7 +218,10 @@ namespace Software.Notepad
 			else if (bytes.AsSpan().StartsWith(new byte[] { 0xFE, 0xFF })) { encoding = new UnicodeEncoding(true, true, true); prefix = 2; }
 			string text = encoding.GetString(bytes, prefix, bytes.Length - prefix);
 			if (text.Contains('\0'))
+			{
 				throw new InvalidDataException("Binary files are not supported.");
+			}
+
 			return new NotepadFile(fullPath, text, encoding, Convert.ToHexString(SHA256.HashData(bytes)));
 		}
 
@@ -199,26 +229,39 @@ namespace Software.Notepad
 		{
 			string output = System.IO.Path.GetFullPath(path);
 			if (!overwrite && File.Exists(output))
+			{
 				throw new IOException("The output file already exists.");
+			}
+
 			string temporary = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(output)!, $".Software.Notepad-{Guid.NewGuid():N}.tmp");
 			try
 			{
 				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
 				using (var writer = new StreamWriter(stream, encoding))
+				{
 					writer.Write(text);
+				}
+
 				using var written = File.OpenRead(temporary);
 				string hash = Convert.ToHexString(SHA256.HashData(written));
 				written.Dispose();
 				if (overwrite && File.Exists(output))
+				{
 					File.Replace(temporary, output, null);
+				}
 				else
+				{
 					File.Move(temporary, output);
+				}
+
 				return hash;
 			}
 			finally
 			{
 				if (File.Exists(temporary))
+				{
 					File.Delete(temporary);
+				}
 			}
 		}
 	}

@@ -42,7 +42,10 @@ namespace Software.MergeTool
 		public MainWindow(string[] arguments)
 		{
 			if (arguments.Length is not (0 or 2 or 3))
+			{
 				throw new ArgumentException("Use MergeTool.exe <left file> <right file> [output file].");
+			}
+
 			this._arguments = arguments.Select(Path.GetFullPath).ToArray();
 			InitializeComponent();
 			_leftRenderer = new DiffBackgroundRenderer(leftSide: true);
@@ -64,7 +67,10 @@ namespace Software.MergeTool
 			if (_arguments.Length >= 2)
 			{
 				if (_arguments.Length == 3)
+				{
 					_outputPath = Path.GetFullPath(_arguments[2]);
+				}
+
 				await LoadComparisonAsync(_arguments[0], _arguments[1]);
 			}
 		}
@@ -76,7 +82,9 @@ namespace Software.MergeTool
 		{
 			var dialog = new OpenFileDialog { Title = "Choose text file", Filter = "All files|*.*" };
 			if (dialog.ShowDialog(this) == true)
+			{
 				target.Text = dialog.FileName;
+			}
 		}
 
 		private async void Compare_Click(object sender, RoutedEventArgs eventArgs) => await LoadComparisonAsync(LeftPathBox.Text, RightPathBox.Text);
@@ -98,7 +106,10 @@ namespace Software.MergeTool
 		public async Task<bool> LoadComparisonAsync(string leftPath, string rightPath)
 		{
 			if (_busy || !ConfirmDiscard())
+			{
 				return false;
+			}
+
 			SetBusy(true);
 			StatusText.Text = "Comparing...";
 			try
@@ -143,7 +154,9 @@ namespace Software.MergeTool
 				ResultEditor.IsEnabled = SaveButton.IsEnabled = SaveAsButton.IsEnabled = true;
 				_selectedDifference = -1;
 				if (_differences.Count > 0)
+				{
 					SelectDifference(0);
+				}
 				else
 				{
 					DifferenceLabel.Text = "Files are identical";
@@ -169,7 +182,10 @@ namespace Software.MergeTool
 		private void SynchronizeScroll(TextEditor source, TextEditor target)
 		{
 			if (_synchronizingScroll)
+			{
 				return;
+			}
+
 			_synchronizingScroll = true;
 			target.ScrollToVerticalOffset(source.VerticalOffset);
 			_synchronizingScroll = false;
@@ -178,16 +194,24 @@ namespace Software.MergeTool
 		private void SelectAtRow(int row)
 		{
 			if (_selectingDifference)
+			{
 				return;
+			}
+
 			int index = _differences.FindIndex(item => row >= item.Block.StartRow && row < item.Block.StartRow + item.Block.RowCount);
 			if (index >= 0 && index != _selectedDifference)
+			{
 				SelectDifference(index);
+			}
 		}
 
 		private void SelectDifference(int index)
 		{
 			if (index < 0 || index >= _differences.Count)
+			{
 				return;
+			}
+
 			_selectingDifference = true;
 			try
 			{
@@ -225,7 +249,10 @@ namespace Software.MergeTool
 		private void ApplyChoice(string choice)
 		{
 			if (_busy || _selectedDifference < 0)
+			{
 				return;
+			}
+
 			var selected = _differences[_selectedDifference];
 			int offset = selected.Start.Offset;
 			int length = Math.Max(0, selected.End.Offset - offset);
@@ -234,7 +261,10 @@ namespace Software.MergeTool
 				|| current == selected.Block.RightText || current == selected.Block.BothText;
 			if (!recognized && MessageBox.Show(this, "This section contains manual edits. Replace them with the selected source?",
 				"Replace manual edits", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+			{
 				return;
+			}
+
 			string text = choice switch { "Left" => selected.Block.LeftText, "Right" => selected.Block.RightText, _ => selected.Block.BothText };
 			ResultEditor.Document.Replace(offset, length, text);
 			selected.ExpectedText = text;
@@ -248,19 +278,26 @@ namespace Software.MergeTool
 		private void Result_TextChanged(object? sender, EventArgs eventArgs)
 		{
 			if (!_loadingResult)
+			{
 				UpdateTitle();
+			}
 		}
 
 		private void Encoding_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			if (!_loadingResult && ResultEditor != null)
+			{
 				UpdateTitle();
+			}
 		}
 
 		private void UpdateTitle()
 		{
 			if (ResultLabel == null)
+			{
 				return;
+			}
+
 			Title = (IsDirty ? "* " : "") + "Merge Tool";
 			ResultLabel.Text = (IsDirty ? "* " : "") + "Merge result" + (_outputPath == null ? "" : $" - {_outputPath}");
 			ResultLabel.ToolTip = _outputPath;
@@ -272,20 +309,32 @@ namespace Software.MergeTool
 		private async Task<bool> SaveResultAsync(bool saveAs)
 		{
 			if (_busy || _leftFile == null)
+			{
 				return false;
+			}
+
 			string? path = _outputPath;
 			if (saveAs)
 			{
 				var dialog = new SaveFileDialog { Title = "Save merge result", FileName = Path.GetFileName(path ?? _leftFile.Path), Filter = "All files|*.*", OverwritePrompt = true };
 				if (dialog.ShowDialog(this) != true)
+				{
 					return false;
+				}
+
 				path = dialog.FileName;
 			}
 			if (path == null)
+			{
 				return false;
+			}
+
 			if (!saveAs && File.Exists(path) && MessageBox.Show(this, $"Replace the existing result file?\n{path}", "Save result",
 				MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+			{
 				return false;
+			}
+
 			string text = ResultEditor.Text;
 			int encodingIndex = EncodingBox.SelectedIndex;
 			Encoding encoding = encodingIndex switch
@@ -331,13 +380,18 @@ namespace Software.MergeTool
 				StatusText.Text = "Wait for the current operation to finish before closing.";
 			}
 			else
+			{
 				eventArgs.Cancel = !ConfirmDiscard();
+			}
 		}
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
 			if (_busy)
+			{
 				return;
+			}
+
 			if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && eventArgs.Key == Key.S)
 			{
 				eventArgs.Handled = true;

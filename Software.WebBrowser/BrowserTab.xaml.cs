@@ -42,14 +42,19 @@ namespace Software.WebBrowser
 		private async void Retry_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (!_initialized && _initializationTask?.IsCompleted == true)
+			{
 				_initializationTask = null;
+			}
+
 			await InitializeAsync();
 		}
 
 		private async Task InitializeBrowserAsync()
 		{
 			if (_disposed)
+			{
 				return;
+			}
 
 			RetryButton.Visibility = Visibility.Collapsed;
 			StatusText.Text = "Starting browser...";
@@ -58,14 +63,21 @@ namespace Software.WebBrowser
 				string profilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 					"Software", "WebBrowser", "UserData");
 				if (_environmentTask == null || _environmentTask.IsFaulted)
+				{
 					_environmentTask = CoreWebView2Environment.CreateAsync(userDataFolder: profilePath);
+				}
+
 				var environment = await _environmentTask;
 				if (_disposed)
+				{
 					return;
+				}
 
 				await Browser.EnsureCoreWebView2Async(environment);
 				if (_disposed)
+				{
 					return;
+				}
 
 				Browser.CoreWebView2.NavigationStarting += NavigationStarting;
 				Browser.CoreWebView2.NavigationCompleted += NavigationCompleted;
@@ -77,7 +89,9 @@ namespace Software.WebBrowser
 				_initialized = true;
 				AddressBox.IsEnabled = GoButton.IsEnabled = HomeButton.IsEnabled = ReloadButton.IsEnabled = true;
 				if (_navigateHome)
+				{
 					Browser.CoreWebView2.Navigate(_homeAddress);
+				}
 			}
 			catch (Exception exception)
 			{
@@ -100,11 +114,15 @@ namespace Software.WebBrowser
 		private void NavigateAddress()
 		{
 			if (!_initialized || _disposed)
+			{
 				return;
+			}
 
 			string input = AddressBox.Text.Trim();
 			if (input.Length == 0)
+			{
 				return;
+			}
 
 			if (Uri.TryCreate(input, UriKind.Absolute, out var address)
 				&& (address.Scheme == Uri.UriSchemeHttp || address.Scheme == Uri.UriSchemeHttps))
@@ -138,21 +156,29 @@ namespace Software.WebBrowser
 		private void Back_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (Browser.CanGoBack)
+			{
 				Browser.GoBack();
+			}
 		}
 
 		private void Forward_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (Browser.CanGoForward)
+			{
 				Browser.GoForward();
+			}
 		}
 
 		private void Reload_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (_loading)
+			{
 				Browser.CoreWebView2.Stop();
+			}
 			else
+			{
 				Browser.Reload();
+			}
 		}
 
 		private void Home_Click(object sender, RoutedEventArgs eventArgs) => Browser.CoreWebView2.Navigate(_homeAddress);
@@ -191,7 +217,9 @@ namespace Software.WebBrowser
 			Title = string.IsNullOrWhiteSpace(Browser.CoreWebView2.DocumentTitle)
 				? "New tab" : Browser.CoreWebView2.DocumentTitle;
 			if (Visibility == Visibility.Visible && Window.GetWindow(this) is Window window)
+			{
 				window.Title = $"{Title} - Web Browser";
+			}
 		}
 
 		private void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs eventArgs)
@@ -208,7 +236,9 @@ namespace Software.WebBrowser
 		public void Dispose()
 		{
 			if (_disposed)
+			{
 				return;
+			}
 
 			_disposed = true;
 			Browser.Dispose();

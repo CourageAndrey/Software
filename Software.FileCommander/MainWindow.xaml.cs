@@ -36,7 +36,9 @@ namespace Software.FileCommander
 		private async void Refresh_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (!_busy)
+			{
 				await RefreshBothAsync();
+			}
 		}
 
 		private Task RefreshBothAsync() => Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
@@ -53,13 +55,17 @@ namespace Software.FileCommander
 		private async void Command_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (sender is Button { Tag: string command })
+			{
 				await ExecuteAsync(command);
+			}
 		}
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
 			if (_busy || Keyboard.Modifiers != ModifierKeys.None || Keyboard.FocusedElement is TextBox)
+			{
 				return;
+			}
 
 			string? command = eventArgs.Key switch
 			{
@@ -87,7 +93,9 @@ namespace Software.FileCommander
 		private async Task ExecuteAsync(string command)
 		{
 			if (_busy || _activePane.IsLoading || string.IsNullOrEmpty(_activePane.CurrentPath))
+			{
 				return;
+			}
 
 			var sourcePane = _activePane;
 			var destinationPane = sourcePane == LeftPane ? RightPane : LeftPane;
@@ -107,10 +115,16 @@ namespace Software.FileCommander
 				case "Copy":
 				case "Move":
 					if (destinationPane.IsLoading || string.IsNullOrEmpty(targetFolder))
+					{
 						return;
+					}
+
 					if (MessageBox.Show(this, $"{command} {selected.Length} selected item(s) to:\n{targetFolder}?", command,
 						MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+					{
 						return;
+					}
+
 					operation = command == "Copy" ? () => FileOperations.Copy(selected, targetFolder) : () => FileOperations.Move(selected, targetFolder);
 					success = $"{command} completed: {selected.Length} item(s).";
 					break;
@@ -122,21 +136,30 @@ namespace Software.FileCommander
 					}
 					string? name = PromptForName("Rename", Path.GetFileName(selected[0]));
 					if (name == null)
+					{
 						return;
+					}
+
 					operation = () => FileOperations.Rename(selected[0], name);
 					success = "Item renamed.";
 					break;
 				case "NewFolder":
 					string? folderName = PromptForName("New folder", "New folder");
 					if (folderName == null)
+					{
 						return;
+					}
+
 					operation = () => FileOperations.CreateFolder(sourceFolder, folderName);
 					success = "Folder created.";
 					break;
 				case "Delete":
 					if (MessageBox.Show(this, $"Send {selected.Length} selected item(s) to the Recycle Bin?", "Delete",
 						MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
+					{
 						return;
+					}
+
 					operation = () => FileOperations.Recycle(selected);
 					success = "Selected items sent to the Recycle Bin.";
 					break;

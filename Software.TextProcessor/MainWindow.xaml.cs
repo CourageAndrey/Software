@@ -31,7 +31,11 @@ namespace Software.TextProcessor
 
 		public MainWindow(string[] arguments)
 		{
-			if (arguments.Length > 1) throw new ArgumentException("Use TextProcessor.exe [document path].");
+			if (arguments.Length > 1)
+			{
+				throw new ArgumentException("Use TextProcessor.exe [document path].");
+			}
+
 			this._arguments = arguments.Select(Path.GetFullPath).ToArray();
 			InitializeComponent();
 			Editor.Document = DocumentFiles.NewDocument();
@@ -46,7 +50,11 @@ namespace Software.TextProcessor
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
-			if (_arguments.Length > 0) await OpenDocumentAsync(_arguments[0]);
+			if (_arguments.Length > 0)
+			{
+				await OpenDocumentAsync(_arguments[0]);
+			}
+
 			Editor.Focus();
 		}
 
@@ -59,7 +67,10 @@ namespace Software.TextProcessor
 
 		private void Editor_SelectionChanged(object sender, RoutedEventArgs eventArgs)
 		{
-			if (!_loading && FontBox != null) UpdateFormatting();
+			if (!_loading && FontBox != null)
+			{
+				UpdateFormatting();
+			}
 		}
 
 		private void UpdateFormatting()
@@ -79,23 +90,41 @@ namespace Software.TextProcessor
 
 		private void Font_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!_loading && !_updatingFormat && FontBox.SelectedItem is FontFamily font) Editor.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, font);
+			if (!_loading && !_updatingFormat && FontBox.SelectedItem is FontFamily font)
+			{
+				Editor.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, font);
+			}
 		}
 
 		private void Size_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!_loading && !_updatingFormat && SizeBox.SelectedItem is double points) ApplyFontSize(points);
+			if (!_loading && !_updatingFormat && SizeBox.SelectedItem is double points)
+			{
+				ApplyFontSize(points);
+			}
 		}
 
 		private void Size_KeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (eventArgs.Key != Key.Enter) return;
+			if (eventArgs.Key != Key.Enter)
+			{
+				return;
+			}
+
 			eventArgs.Handled = true;
-			if (double.TryParse(SizeBox.Text, out double points)) ApplyFontSize(points);
+			if (double.TryParse(SizeBox.Text, out double points))
+			{
+				ApplyFontSize(points);
+			}
+
 			Editor.Focus();
 		}
 
-		private void ApplyFontSize(double points) { if (points is >= 4 and <= 200) Editor.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, points * 4 / 3); }
+		private void ApplyFontSize(double points) { if (points is >= 4 and <= 200)
+			{
+				Editor.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, points * 4 / 3);
+			}
+		}
 		private void Bold_Click(object sender, RoutedEventArgs eventArgs) => EditingCommands.ToggleBold.Execute(null, Editor);
 		private void Italic_Click(object sender, RoutedEventArgs eventArgs) => EditingCommands.ToggleItalic.Execute(null, Editor);
 		private void Underline_Click(object sender, RoutedEventArgs eventArgs) => EditingCommands.ToggleUnderline.Execute(null, Editor);
@@ -104,20 +133,34 @@ namespace Software.TextProcessor
 		{
 			var next = (Editor.Selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection)?.Clone() ?? new TextDecorationCollection();
 			bool strike = next.Any(item => item.Location == TextDecorationLocation.Strikethrough);
-			foreach (var item in next.Where(item => item.Location == TextDecorationLocation.Strikethrough).ToArray()) next.Remove(item);
-			if (!strike) next.Add(TextDecorations.Strikethrough[0]);
+			foreach (var item in next.Where(item => item.Location == TextDecorationLocation.Strikethrough).ToArray())
+			{
+				next.Remove(item);
+			}
+
+			if (!strike)
+			{
+				next.Add(TextDecorations.Strikethrough[0]);
+			}
+
 			Editor.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty, next);
 		}
 
 		private void Color_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			if (!_loading && !_updatingFormat && ColorBox.SelectedItem is ComboBoxItem { Tag: string color })
+			{
 				Editor.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)));
+			}
 		}
 
 		private async void New_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (_busy || !await ConfirmDiscardAsync()) return;
+			if (_busy || !await ConfirmDiscardAsync())
+			{
+				return;
+			}
+
 			_loading = true;
 			Editor.Document = DocumentFiles.NewDocument();
 			Editor.Document.Blocks.Add(new Paragraph());
@@ -134,12 +177,19 @@ namespace Software.TextProcessor
 		private async void Open_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			var dialog = new OpenFileDialog { Title = "Open document", Filter = "Documents|*.rtf;*.txt;*.doc;*.docx|Rich text|*.rtf|Word documents|*.doc;*.docx|Text|*.txt" };
-			if (dialog.ShowDialog(this) == true) await OpenDocumentAsync(dialog.FileName);
+			if (dialog.ShowDialog(this) == true)
+			{
+				await OpenDocumentAsync(dialog.FileName);
+			}
 		}
 
 		public async Task<bool> OpenDocumentAsync(string path)
 		{
-			if (_busy || !await ConfirmDiscardAsync()) return false;
+			if (_busy || !await ConfirmDiscardAsync())
+			{
+				return false;
+			}
+
 			SetBusy(true);
 			StatusText.Text = "Opening document...";
 			await Dispatcher.Yield(DispatcherPriority.Background);
@@ -170,25 +220,45 @@ namespace Software.TextProcessor
 
 		public async Task<bool> SaveDocumentAsync(bool saveAs = false, string? chosenPath = null)
 		{
-			if (_busy) return false;
+			if (_busy)
+			{
+				return false;
+			}
+
 			string? path = chosenPath ?? _currentPath;
 			if (path == null || saveAs || Path.GetExtension(path).Equals(".doc", StringComparison.OrdinalIgnoreCase))
 			{
 				var dialog = new SaveFileDialog { Title = "Save document", Filter = "Rich text|*.rtf|Word document|*.docx|Plain text|*.txt", DefaultExt = ".rtf", AddExtension = true,
 					FileName = _currentPath == null ? "" : Path.GetFileNameWithoutExtension(_currentPath), OverwritePrompt = true };
-				if (dialog.ShowDialog(this) != true) return false;
+				if (dialog.ShowDialog(this) != true)
+				{
+					return false;
+				}
+
 				path = dialog.FileName;
 			}
 			if (Path.GetExtension(path).Equals(".txt", StringComparison.OrdinalIgnoreCase) && MessageBox.Show(this,
-				"Plain text does not retain formatting, images, or tables. Save as plain text?", "Formatting will be lost", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return false;
+				"Plain text does not retain formatting, images, or tables. Save as plain text?", "Formatting will be lost", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+			{
+				return false;
+			}
+
 			SetBusy(true);
 			await Dispatcher.Yield(DispatcherPriority.Background);
 			try
 			{
 				if (File.Exists(path) && string.Equals(path, _currentPath, StringComparison.OrdinalIgnoreCase) && _diskHash != null && HashFile(path) != _diskHash
-					&& MessageBox.Show(this, "The file changed outside Text Processor. Replace the external changes?", "File changed", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return false;
+					&& MessageBox.Show(this, "The file changed outside Text Processor. Replace the external changes?", "File changed", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+				{
+					return false;
+				}
+
 				if (chosenPath != null && File.Exists(path) && !string.Equals(path, _currentPath, StringComparison.OrdinalIgnoreCase)
-					&& MessageBox.Show(this, "Replace the existing destination?", "Save document", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return false;
+					&& MessageBox.Show(this, "Replace the existing destination?", "Save document", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+				{
+					return false;
+				}
+
 				DocumentFiles.Save(path, Editor.Document, overwrite: true);
 				_currentPath = Path.GetFullPath(path);
 				_diskHash = HashFile(_currentPath);
@@ -202,7 +272,11 @@ namespace Software.TextProcessor
 
 		private async Task<bool> ConfirmDiscardAsync()
 		{
-			if (!IsDirty) return true;
+			if (!IsDirty)
+			{
+				return true;
+			}
+
 			var answer = MessageBox.Show(this, "Save changes to the current document?", "Unsaved document", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 			return answer == MessageBoxResult.No || (answer == MessageBoxResult.Yes && await SaveDocumentAsync());
 		}
@@ -210,7 +284,11 @@ namespace Software.TextProcessor
 		private async void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
 			if (_busy || _pendingClose) { eventArgs.Cancel = true; return; }
-			if (_approvedClose || !IsDirty) return;
+			if (_approvedClose || !IsDirty)
+			{
+				return;
+			}
+
 			eventArgs.Cancel = true;
 			_pendingClose = true;
 			bool confirmed = await ConfirmDiscardAsync();
@@ -227,7 +305,11 @@ namespace Software.TextProcessor
 			try
 			{
 				var dialog = new PrintDialog();
-				if (dialog.ShowDialog() != true) return;
+				if (dialog.ShowDialog() != true)
+				{
+					return;
+				}
+
 				var clone = DocumentFiles.NewDocument();
 				using var stream = new MemoryStream();
 				new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Save(stream, DataFormats.XamlPackage);
@@ -242,10 +324,18 @@ namespace Software.TextProcessor
 		private void Image_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			var dialog = new OpenFileDialog { Title = "Insert image", Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff" };
-			if (dialog.ShowDialog(this) != true) return;
+			if (dialog.ShowDialog(this) != true)
+			{
+				return;
+			}
+
 			try
 			{
-				if (new FileInfo(dialog.FileName).Length > DocumentFiles.MaximumFileBytes) throw new IOException("Choose an image of 20 MiB or less.");
+				if (new FileInfo(dialog.FileName).Length > DocumentFiles.MaximumFileBytes)
+				{
+					throw new IOException("Choose an image of 20 MiB or less.");
+				}
+
 				var image = new BitmapImage();
 				using (var stream = File.OpenRead(dialog.FileName)) { image.BeginInit(); image.CacheOption = BitmapCacheOption.OnLoad; image.DecodePixelWidth = 1200; image.StreamSource = stream; image.EndInit(); }
 				image.Freeze();
@@ -267,24 +357,43 @@ namespace Software.TextProcessor
 			var cancel = new Button { Content = "Cancel", IsCancel = true, Margin = new Thickness(0, 6, 0, 0) };
 			content.Children.Add(ok); content.Children.Add(cancel);
 			var dialog = new Window { Title = "Insert table", Owner = this, Content = content, Width = 280, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false };
-			ok.Click += (_, _) => { if (int.TryParse(rows.Text, out int rowCount) && rowCount is >= 1 and <= 20 && int.TryParse(columns.Text, out int columnCount) && columnCount is >= 1 and <= 10) dialog.DialogResult = true; };
-			if (dialog.ShowDialog() == true) InsertTable(int.Parse(rows.Text), int.Parse(columns.Text));
+			ok.Click += (_, _) => { if (int.TryParse(rows.Text, out int rowCount) && rowCount is >= 1 and <= 20 && int.TryParse(columns.Text, out int columnCount) && columnCount is >= 1 and <= 10) { dialog.DialogResult = true; } };
+			if (dialog.ShowDialog() == true)
+			{
+				InsertTable(int.Parse(rows.Text), int.Parse(columns.Text));
+			}
 		}
 
 		public void InsertTable(int rows, int columns)
 		{
-			if (rows is < 1 or > 20 || columns is < 1 or > 10) throw new ArgumentOutOfRangeException(nameof(rows));
+			if (rows is < 1 or > 20 || columns is < 1 or > 10)
+			{
+				throw new ArgumentOutOfRangeException(nameof(rows));
+			}
+
 			var table = new Table { CellSpacing = 0 };
 			var group = new TableRowGroup();
 			for (int row = 0; row < rows; row++)
 			{
 				var target = new TableRow();
-				for (int column = 0; column < columns; column++) target.Cells.Add(new TableCell(new Paragraph(new Run(""))) { BorderBrush = Brushes.Gray, BorderThickness = new Thickness(1), Padding = new Thickness(5) });
+				for (int column = 0; column < columns; column++)
+				{
+					target.Cells.Add(new TableCell(new Paragraph(new Run(""))) { BorderBrush = Brushes.Gray, BorderThickness = new Thickness(1), Padding = new Thickness(5) });
+				}
+
 				group.Rows.Add(target);
 			}
 			table.RowGroups.Add(group);
 			var paragraph = Editor.CaretPosition.Paragraph;
-			if (paragraph?.Parent == Editor.Document) Editor.Document.Blocks.InsertAfter(paragraph, table); else Editor.Document.Blocks.Add(table);
+			if (paragraph?.Parent == Editor.Document)
+			{
+				Editor.Document.Blocks.InsertAfter(paragraph, table);
+			}
+			else
+			{
+				Editor.Document.Blocks.Add(table);
+			}
+
 			Editor.Focus();
 		}
 
@@ -292,7 +401,11 @@ namespace Software.TextProcessor
 		private void ShowSearch_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			SearchPanel.Visibility = Visibility.Visible;
-			if (!Editor.Selection.IsEmpty) FindBox.Text = Editor.Selection.Text;
+			if (!Editor.Selection.IsEmpty)
+			{
+				FindBox.Text = Editor.Selection.Text;
+			}
+
 			_searchOffset = 0; FindBox.Focus(); FindBox.SelectAll();
 		}
 		private void HideSearch_Click(object sender, RoutedEventArgs eventArgs) { SearchPanel.Visibility = Visibility.Collapsed; Editor.Focus(); }
@@ -301,7 +414,11 @@ namespace Software.TextProcessor
 		private List<TextRange> FindMatches()
 		{
 			var result = new List<TextRange>();
-			if (FindBox.Text.Length == 0) return result;
+			if (FindBox.Text.Length == 0)
+			{
+				return result;
+			}
+
 			foreach (var paragraph in Paragraphs(Editor.Document.Blocks))
 			{
 				var pointers = new List<TextPointer>();
@@ -315,14 +432,21 @@ namespace Software.TextProcessor
 						for (int index = 0; index < run.Length; index++) { pointers.Add(pointer.GetPositionAtOffset(index)!); text.Append(run[index]); }
 						pointer = pointer.GetPositionAtOffset(run.Length);
 					}
-					else pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+					else
+					{
+						pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+					}
 				}
 				string value = text.ToString();
 				int offset = 0;
 				while (offset <= value.Length - FindBox.Text.Length)
 				{
 					int match = value.IndexOf(FindBox.Text, offset, MatchCase.IsChecked == true ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
-					if (match < 0) break;
+					if (match < 0)
+					{
+						break;
+					}
+
 					result.Add(new TextRange(pointers[match], pointers[match + FindBox.Text.Length - 1].GetPositionAtOffset(1)!));
 					offset = match + FindBox.Text.Length;
 				}
@@ -334,10 +458,37 @@ namespace Software.TextProcessor
 		{
 			foreach (Block block in blocks)
 			{
-				if (block is Paragraph paragraph) yield return paragraph;
-				else if (block is Section section) { foreach (var child in Paragraphs(section.Blocks)) yield return child; }
-				else if (block is System.Windows.Documents.List list) { foreach (var item in list.ListItems) foreach (var child in Paragraphs(item.Blocks)) yield return child; }
-				else if (block is Table table) { foreach (var group in table.RowGroups) foreach (var row in group.Rows) foreach (var cell in row.Cells) foreach (var child in Paragraphs(cell.Blocks)) yield return child; }
+				if (block is Paragraph paragraph)
+				{
+					yield return paragraph;
+				}
+				else if (block is Section section) { foreach (var child in Paragraphs(section.Blocks))
+					{
+						yield return child;
+					}
+				}
+				else if (block is System.Windows.Documents.List list) { foreach (var item in list.ListItems)
+					{
+						foreach (var child in Paragraphs(item.Blocks))
+						{
+							yield return child;
+						}
+					}
+				}
+				else if (block is Table table) { foreach (var group in table.RowGroups)
+					{
+						foreach (var row in group.Rows)
+						{
+							foreach (var cell in row.Cells)
+							{
+								foreach (var child in Paragraphs(cell.Blocks))
+								{
+									yield return child;
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -352,21 +503,33 @@ namespace Software.TextProcessor
 		}
 		private void Replace_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (FindBox.Text.Length > 0 && Editor.Selection.Text.Equals(FindBox.Text, MatchCase.IsChecked == true ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase)) Editor.Selection.Text = ReplaceBox.Text;
+			if (FindBox.Text.Length > 0 && Editor.Selection.Text.Equals(FindBox.Text, MatchCase.IsChecked == true ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+			{
+				Editor.Selection.Text = ReplaceBox.Text;
+			}
+
 			FindNext_Click(sender, eventArgs);
 		}
 		private void ReplaceAll_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			var matches = FindMatches();
 			Editor.BeginChange();
-			try { for (int index = matches.Count - 1; index >= 0; index--) matches[index].Text = ReplaceBox.Text; }
+			try { for (int index = matches.Count - 1; index >= 0; index--)
+				{
+					matches[index].Text = ReplaceBox.Text;
+				}
+			}
 			finally { Editor.EndChange(); }
 			StatusText.Text = $"Replaced {matches.Count} occurrence(s).";
 		}
 
 		private void Zoom_Changed(object sender, RoutedPropertyChangedEventArgs<double> eventArgs)
 		{
-			if (EditorScale == null) return;
+			if (EditorScale == null)
+			{
+				return;
+			}
+
 			EditorScale.ScaleX = EditorScale.ScaleY = eventArgs.NewValue / 100; ZoomLabel.Text = $"{eventArgs.NewValue:0}%";
 		}
 		private void SetBusy(bool value) { _busy = value; MainMenu.IsEnabled = FileToolbar.IsEnabled = FormatToolbar.IsEnabled = Editor.IsEnabled = SearchPanel.IsEnabled = !value; }
@@ -376,7 +539,11 @@ namespace Software.TextProcessor
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (_busy) return;
+			if (_busy)
+			{
+				return;
+			}
+
 			if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
 			{
 				switch (eventArgs.Key)
@@ -392,6 +559,10 @@ namespace Software.TextProcessor
 			else if (eventArgs.Key == Key.Escape && SearchPanel.Visibility == Visibility.Visible) { eventArgs.Handled = true; HideSearch_Click(sender, new RoutedEventArgs()); }
 		}
 		private void Window_DragOver(object sender, DragEventArgs eventArgs) { eventArgs.Effects = !_busy && eventArgs.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None; eventArgs.Handled = true; }
-		private async void Window_Drop(object sender, DragEventArgs eventArgs) { if (!_busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths) await OpenDocumentAsync(paths[0]); }
+		private async void Window_Drop(object sender, DragEventArgs eventArgs) { if (!_busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths)
+			{
+				await OpenDocumentAsync(paths[0]);
+			}
+		}
 	}
 }

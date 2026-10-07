@@ -7,10 +7,16 @@ namespace Software.Notepad
 		public static Regex Pattern(string pattern, bool matchCase = false, bool regex = false, bool wholeWord = false)
 		{
 			if (pattern.Length == 0)
+			{
 				throw new ArgumentException("Enter text to find.");
+			}
+
 			string expression = regex ? pattern : Regex.Escape(pattern);
 			if (wholeWord)
+			{
 				expression = @"(?<!\w)(?:" + expression + @")(?!\w)";
+			}
+
 			return new Regex(expression, RegexOptions.Multiline | RegexOptions.CultureInvariant
 				| (matchCase ? RegexOptions.None : RegexOptions.IgnoreCase), TimeSpan.FromMilliseconds(250));
 		}

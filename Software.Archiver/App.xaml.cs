@@ -26,7 +26,10 @@ namespace Software.Archiver
 		public static ArchiveLaunchRequest Parse(string[] arguments)
 		{
 			if (arguments.Length == 0)
+			{
 				return new ArchiveLaunchRequest("None", []);
+			}
+
 			string action = arguments[0] switch
 			{
 				"--add" => "Add",
@@ -38,7 +41,10 @@ namespace Software.Archiver
 			string[] paths = arguments.Skip(arguments[0].StartsWith("--", StringComparison.Ordinal) ? 1 : 0)
 				.Select(Path.GetFullPath).ToArray();
 			if (paths.Length == 0 || (action != "Add" && paths.Length != 1))
+			{
 				throw new ArgumentException("Choose at least one input for --add, or exactly one archive to open or extract.");
+			}
+
 			return new ArchiveLaunchRequest(action, paths);
 		}
 	}

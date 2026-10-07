@@ -198,7 +198,10 @@ namespace Software.UnitTests
 		public void TearDown()
 		{
 			foreach (var document in Tabs.Items.Cast<EditorDocument>())
+			{
 				document.MarkSaved(Path.Combine(_root, "discard.txt"), "test-only");
+			}
+
 			_window.Close();
 			Directory.Delete(_root, recursive: true);
 		}

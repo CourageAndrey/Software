@@ -24,12 +24,18 @@ namespace Software.MergeTool
 		public void Draw(TextView textView, DrawingContext drawingContext)
 		{
 			if (!textView.VisualLinesValid)
+			{
 				return;
+			}
+
 			foreach (var line in textView.VisualLines)
 			{
 				int index = line.FirstDocumentLine.LineNumber - 1;
 				if (index >= Rows.Length)
+				{
 					continue;
+				}
+
 				ChangeType change = leftSide ? Rows[index].LeftChange : Rows[index].RightChange;
 				Brush? background = change switch
 				{
@@ -41,9 +47,14 @@ namespace Software.MergeTool
 				};
 				double top = line.VisualTop - textView.VerticalOffset;
 				if (background != null)
+				{
 					drawingContext.DrawRectangle(background, null, new Rect(0, top, textView.ActualWidth, line.Height));
+				}
+
 				if (index >= SelectedStart && index < SelectedStart + SelectedCount)
+				{
 					drawingContext.DrawRectangle(_selected, null, new Rect(0, top, 3, line.Height));
+				}
 			}
 		}
 	}
@@ -75,15 +86,24 @@ namespace Software.MergeTool
 		{
 			drawingContext.DrawRectangle(new SolidColorBrush(Color.FromRgb(248, 250, 251)), null, new Rect(RenderSize));
 			if (TextView == null || !TextView.VisualLinesValid)
+			{
 				return;
+			}
+
 			foreach (var line in TextView.VisualLines)
 			{
 				int index = line.FirstDocumentLine.LineNumber - 1;
 				if (index >= Rows.Length)
+				{
 					continue;
+				}
+
 				int? number = leftSide ? Rows[index].LeftLine : Rows[index].RightLine;
 				if (number == null)
+				{
 					continue;
+				}
+
 				var text = new FormattedText(number.Value.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture,
 					FlowDirection.LeftToRight, new Typeface(editor.FontFamily, editor.FontStyle, editor.FontWeight, editor.FontStretch),
 					editor.FontSize, Brushes.Gray, VisualTreeHelper.GetDpi(this).PixelsPerDip);

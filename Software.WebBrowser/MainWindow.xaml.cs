@@ -33,7 +33,10 @@ namespace Software.WebBrowser
 		private void CloseTab_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (sender is Button { Tag: BrowserTab tab })
+			{
 				CloseTab(tab);
+			}
+
 			eventArgs.Handled = true;
 		}
 
@@ -41,7 +44,9 @@ namespace Software.WebBrowser
 		{
 			int index = _tabs.IndexOf(tab);
 			if (index < 0)
+			{
 				return;
+			}
 
 			bool wasSelected = TabStrip.SelectedItem == tab;
 			tab.NewTabRequested -= OpenNewWindow;
@@ -56,16 +61,22 @@ namespace Software.WebBrowser
 			}
 
 			if (wasSelected)
+			{
 				TabStrip.SelectedItem = _tabs[Math.Min(index, _tabs.Count - 1)];
+			}
 		}
 
 		private void TabStrip_SelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			foreach (var tab in _tabs)
+			{
 				tab.Visibility = TabStrip.SelectedItem == tab ? Visibility.Visible : Visibility.Collapsed;
+			}
 
 			if (TabStrip.SelectedItem is BrowserTab selected)
+			{
 				Title = $"{selected.Title} - Web Browser";
+			}
 		}
 
 		private async void OpenNewWindow(CoreWebView2NewWindowRequestedEventArgs eventArgs)
@@ -75,7 +86,9 @@ namespace Software.WebBrowser
 			var tab = AddTab(navigateHome: false);
 			await tab.InitializeAsync();
 			if (tab.Core != null)
+			{
 				eventArgs.NewWindow = tab.Core;
+			}
 		}
 
 		private void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
@@ -93,7 +106,9 @@ namespace Software.WebBrowser
 		private bool HandleShortcut(Key key, ModifierKeys modifiers)
 		{
 			if ((modifiers & ModifierKeys.Control) == 0 || (modifiers & ModifierKeys.Alt) != 0)
+			{
 				return false;
+			}
 
 			switch (key)
 			{

@@ -12,7 +12,11 @@ namespace Software.Sheets
 
 		public static CellEdit[] Parse(string text, int row, int column)
 		{
-			if (text.Length > 2 * 1024 * 1024) throw new InvalidDataException("Clipboard text must be at most 2 Mi characters.");
+			if (text.Length > 2 * 1024 * 1024)
+			{
+				throw new InvalidDataException("Clipboard text must be at most 2 Mi characters.");
+			}
+
 			using var reader = new CsvReader(new StringReader(text), new CsvConfiguration(CultureInfo.InvariantCulture)
 			{
 				Delimiter = "\t", HasHeaderRecord = false, IgnoreBlankLines = false, TrimOptions = TrimOptions.None
@@ -25,7 +29,10 @@ namespace Software.Sheets
 				for (int index = 0; index < values.Length; index++)
 				{
 					if (row + offset >= SpreadsheetBook.MaximumRows || column + index >= SpreadsheetBook.MaximumColumns)
+					{
 						throw new ArgumentOutOfRangeException(nameof(row), "The pasted range exceeds worksheet limits.");
+					}
+
 					edits.Add(new CellEdit(row + offset, column + index, values[index]));
 				}
 				offset++;

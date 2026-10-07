@@ -174,7 +174,10 @@ namespace Software.UnitTests
 			string tarPath = Path.Combine(_root, "links.tar");
 			using (var output = File.Create(tarPath))
 			using (var writer = new TarWriter(output))
+			{
 				writer.WriteEntry(new PaxTarEntry(TarEntryType.SymbolicLink, "link") { LinkName = "../outside" });
+			}
+
 			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(tarPath, _destination));
 			Assert.That(Directory.Exists(_destination), Is.False);
 		}
@@ -237,7 +240,9 @@ namespace Software.UnitTests
 				completion = (_, _) =>
 				{
 					if (((DataGrid)window.FindName("EntryList")).Items.Count == 2)
+					{
 						frame.Continue = false;
+					}
 				};
 				window.LayoutUpdated += completion;
 				window.Show();

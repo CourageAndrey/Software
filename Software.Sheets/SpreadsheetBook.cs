@@ -54,8 +54,16 @@ namespace Software.Sheets
 		{
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 			string extension = Path.GetExtension(path).ToLowerInvariant();
-			if (extension is not (".xls" or ".xlsx")) throw new NotSupportedException("Open XLS or XLSX workbooks.");
-			if (new FileInfo(path).Length > 20L * 1024 * 1024) throw new InvalidDataException("Choose workbooks of 20 MiB or less.");
+			if (extension is not (".xls" or ".xlsx"))
+			{
+				throw new NotSupportedException("Open XLS or XLSX workbooks.");
+			}
+
+			if (new FileInfo(path).Length > 20L * 1024 * 1024)
+			{
+				throw new InvalidDataException("Choose workbooks of 20 MiB or less.");
+			}
+
 			if (extension == ".xlsx")
 			{
 				using var zip = System.IO.Compression.ZipFile.OpenRead(path);
@@ -63,7 +71,10 @@ namespace Software.Sheets
 				foreach (var entry in zip.Entries)
 				{
 					if (zip.Entries.Count > 10_000 || entry.Length > 100L * 1024 * 1024 - size)
+					{
 						throw new InvalidDataException("The workbook exceeds package safety limits.");
+					}
+
 					size += entry.Length;
 				}
 			}
@@ -71,17 +82,32 @@ namespace Software.Sheets
 			IWorkbook workbook = extension == ".xls" ? new HSSFWorkbook(stream) : new XSSFWorkbook(stream);
 			try
 			{
-				if (workbook.NumberOfSheets is < 1 or > 32) throw new InvalidDataException("Workbooks must contain 1-32 worksheets.");
+				if (workbook.NumberOfSheets is < 1 or > 32)
+				{
+					throw new InvalidDataException("Workbooks must contain 1-32 worksheets.");
+				}
+
 				int cells = 0;
 				for (int index = 0; index < workbook.NumberOfSheets; index++)
 				{
 					var sheet = workbook.GetSheetAt(index);
-					if (sheet.LastRowNum >= MaximumRows) throw new InvalidDataException("Worksheets exceeding 10,000 rows are not supported.");
+					if (sheet.LastRowNum >= MaximumRows)
+					{
+						throw new InvalidDataException("Worksheets exceeding 10,000 rows are not supported.");
+					}
+
 					foreach (IRow row in sheet)
 					{
-						if (row.LastCellNum > MaximumColumns) throw new InvalidDataException("Worksheets exceeding 256 columns are not supported.");
+						if (row.LastCellNum > MaximumColumns)
+						{
+							throw new InvalidDataException("Worksheets exceeding 256 columns are not supported.");
+						}
+
 						cells += row.PhysicalNumberOfCells;
-						if (cells > 250_000) throw new InvalidDataException("Workbooks exceeding 250,000 stored cells are not supported.");
+						if (cells > 250_000)
+						{
+							throw new InvalidDataException("Workbooks exceeding 250,000 stored cells are not supported.");
+						}
 					}
 				}
 				return new SpreadsheetBook(workbook);
@@ -91,7 +117,11 @@ namespace Software.Sheets
 
 		public void SelectSheet(int index)
 		{
-			if (index < 0 || index >= _workbook.NumberOfSheets) throw new ArgumentOutOfRangeException(nameof(index));
+			if (index < 0 || index >= _workbook.NumberOfSheets)
+			{
+				throw new ArgumentOutOfRangeException(nameof(index));
+			}
+
 			ActiveSheet = index;
 			_workbook.SetActiveSheet(index);
 		}
@@ -100,7 +130,11 @@ namespace Software.Sheets
 		{
 			var sheet = _workbook.GetSheetAt(ActiveSheet);
 			int columns = 0;
-			foreach (IRow row in sheet) columns = Math.Max(columns, row.LastCellNum);
+			foreach (IRow row in sheet)
+			{
+				columns = Math.Max(columns, row.LastCellNum);
+			}
+
 			return (Math.Min(MaximumRows, Math.Max(100, sheet.LastRowNum + 26)), Math.Min(MaximumColumns, Math.Max(26, columns + 5)));
 		}
 
@@ -124,14 +158,21 @@ namespace Software.Sheets
 			string input = Input(row, column);
 			if (Cell(row, column)?.CellType == CellType.String && (input.StartsWith('=') || input.StartsWith('\'')
 				|| bool.TryParse(input, out _) || double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out _)))
+			{
 				return "'" + input;
+			}
+
 			return input;
 		}
 
 		public string Display(int row, int column)
 		{
 			var cell = Cell(row, column);
-			if (cell == null) return "";
+			if (cell == null)
+			{
+				return "";
+			}
+
 			try { return _formatter.FormatCellValue(cell, _evaluator); }
 			catch (Exception exception) when (exception is NotImplementedException or InvalidOperationException or ArgumentException)
 			{
@@ -142,7 +183,11 @@ namespace Software.Sheets
 		public CellAppearance Appearance(int row, int column)
 		{
 			var cell = Cell(row, column);
-			if (cell == null) return new(false, false, "#111827", "#FFFFFF", "Left");
+			if (cell == null)
+			{
+				return new(false, false, "#111827", "#FFFFFF", "Left");
+			}
+
 			var style = cell.CellStyle;
 			var font = _workbook.GetFontAt(style.FontIndex);
 			return new CellAppearance(font.IsBold, font.IsItalic, IndexedColor(font.Color, "#111827"),
@@ -155,7 +200,11 @@ namespace Software.Sheets
 			foreach (var edit in planned)
 			{
 				CheckAddress(edit.Row, edit.Column);
-				if (edit.Input.Length > 32767) throw new ArgumentException("Cell text must be at most 32,767 characters.");
+				if (edit.Input.Length > 32767)
+				{
+					throw new ArgumentException("Cell text must be at most 32,767 characters.");
+				}
+
 				if (edit.Input.StartsWith('='))
 				{
 					IFormulaParsingWorkbook parsing = _workbook is XSSFWorkbook xlsx ? XSSFEvaluationWorkbook.Create(xlsx) : HSSFEvaluationWorkbook.Create((HSSFWorkbook)_workbook);
@@ -167,9 +216,17 @@ namespace Software.Sheets
 				var before = Capture(edit.Row, edit.Column);
 				return new CellChange(ActiveSheet, edit.Row, edit.Column, before, new CellState(edit.Input, before.Style), _revision, _nextRevision + 1);
 			}).ToArray();
-			if (changes.Length == 0) return;
-			try { foreach (var change in changes) Apply(change.Row, change.Column, change.After); }
-			catch { foreach (var change in changes) Apply(change.Row, change.Column, change.Before); throw; }
+			if (changes.Length == 0)
+			{
+				return;
+			}
+
+			try { foreach (var change in changes)
+				{
+					Apply(change.Row, change.Column, change.After);
+				}
+			}
+			catch { foreach (var change in changes) { Apply(change.Row, change.Column, change.Before); } throw; }
 			Commit(changes);
 		}
 
@@ -184,7 +241,11 @@ namespace Software.Sheets
 				string key = $"{before.Style}:{bold}:{italic}:{numberFormat}:{alignment}";
 				if (!_styles.TryGetValue(key, out var style))
 				{
-					if (_workbook.NumCellStyles >= 3500) throw new InvalidOperationException("The workbook has too many styles to add more formatting safely.");
+					if (_workbook.NumCellStyles >= 3500)
+					{
+						throw new InvalidOperationException("The workbook has too many styles to add more formatting safely.");
+					}
+
 					style = _workbook.CreateCellStyle();
 					style.CloneStyleFrom(oldStyle);
 					if (bold != null || italic != null)
@@ -196,14 +257,30 @@ namespace Software.Sheets
 						font.Color = oldFont.Color; font.Underline = oldFont.Underline; font.IsStrikeout = oldFont.IsStrikeout;
 						style.SetFont(font);
 					}
-					if (numberFormat != null) style.DataFormat = _workbook.CreateDataFormat().GetFormat(numberFormat);
-					if (alignment != null) style.Alignment = Enum.Parse<HorizontalAlignment>(alignment);
+					if (numberFormat != null)
+					{
+						style.DataFormat = _workbook.CreateDataFormat().GetFormat(numberFormat);
+					}
+
+					if (alignment != null)
+					{
+						style.Alignment = Enum.Parse<HorizontalAlignment>(alignment);
+					}
+
 					_styles.Add(key, style);
 				}
 				changes.Add(new CellChange(ActiveSheet, row, column, before, before with { Style = style.Index }, _revision, _nextRevision + 1));
 			}
-			if (changes.Count == 0) return;
-			foreach (var change in changes) Apply(change.Row, change.Column, change.After);
+			if (changes.Count == 0)
+			{
+				return;
+			}
+
+			foreach (var change in changes)
+			{
+				Apply(change.Row, change.Column, change.After);
+			}
+
 			Commit(changes.ToArray());
 		}
 
@@ -220,12 +297,31 @@ namespace Software.Sheets
 			var targetRow = sheet.GetRow(row) ?? sheet.CreateRow(row);
 			var cell = targetRow.GetCell(column) ?? targetRow.CreateCell(column);
 			cell.SetCellType(CellType.Blank);
-			if (value.Error is byte error) cell.SetCellErrorValue(error);
-			else if (value.Input.StartsWith('=')) cell.SetCellFormula(value.Input[1..]);
-			else if (value.Input.StartsWith('\'')) cell.SetCellValue(value.Input[1..]);
-			else if (bool.TryParse(value.Input, out bool boolean)) cell.SetCellValue(boolean);
-			else if (double.TryParse(value.Input, NumberStyles.Float, CultureInfo.InvariantCulture, out double number) && double.IsFinite(number)) cell.SetCellValue(number);
-			else if (value.Input.Length > 0) cell.SetCellValue(value.Input);
+			if (value.Error is byte error)
+			{
+				cell.SetCellErrorValue(error);
+			}
+			else if (value.Input.StartsWith('='))
+			{
+				cell.SetCellFormula(value.Input[1..]);
+			}
+			else if (value.Input.StartsWith('\''))
+			{
+				cell.SetCellValue(value.Input[1..]);
+			}
+			else if (bool.TryParse(value.Input, out bool boolean))
+			{
+				cell.SetCellValue(boolean);
+			}
+			else if (double.TryParse(value.Input, NumberStyles.Float, CultureInfo.InvariantCulture, out double number) && double.IsFinite(number))
+			{
+				cell.SetCellValue(number);
+			}
+			else if (value.Input.Length > 0)
+			{
+				cell.SetCellValue(value.Input);
+			}
+
 			cell.CellStyle = _workbook.GetCellStyleAt(value.Style);
 		}
 
@@ -240,17 +336,29 @@ namespace Software.Sheets
 
 		private void Replay(Stack<CellChange[]> source, Stack<CellChange[]> destination, bool forward)
 		{
-			if (source.Count == 0) return;
+			if (source.Count == 0)
+			{
+				return;
+			}
+
 			var changes = source.Pop();
 			SelectSheet(changes[0].Sheet);
-			foreach (var change in changes) Apply(change.Row, change.Column, forward ? change.After : change.Before);
+			foreach (var change in changes)
+			{
+				Apply(change.Row, change.Column, forward ? change.After : change.Before);
+			}
+
 			_revision = forward ? changes[0].AfterRevision : changes[0].BeforeRevision;
 			destination.Push(changes); _evaluator.ClearAllCachedResultValues();
 		}
 
 		public void AddSheet(string name)
 		{
-			if (_workbook.NumberOfSheets >= 32) throw new InvalidOperationException("At most 32 worksheets are supported.");
+			if (_workbook.NumberOfSheets >= 32)
+			{
+				throw new InvalidOperationException("At most 32 worksheets are supported.");
+			}
+
 			WorkbookUtil.ValidateSheetName(name);
 			_workbook.CreateSheet(name); SelectSheet(_workbook.NumberOfSheets - 1); StructureChanged();
 		}
@@ -258,7 +366,11 @@ namespace Software.Sheets
 		public void RenameSheet(string name) { WorkbookUtil.ValidateSheetName(name); _workbook.SetSheetName(ActiveSheet, name); StructureChanged(); }
 		public void DeleteSheet()
 		{
-			if (_workbook.NumberOfSheets == 1) throw new InvalidOperationException("Keep at least one worksheet.");
+			if (_workbook.NumberOfSheets == 1)
+			{
+				throw new InvalidOperationException("Keep at least one worksheet.");
+			}
+
 			_workbook.RemoveSheetAt(ActiveSheet); SelectSheet(Math.Min(ActiveSheet, _workbook.NumberOfSheets - 1)); StructureChanged();
 		}
 		private void StructureChanged() { _revision = ++_nextRevision; _undo.Clear(); _redo.Clear(); _evaluator.ClearAllCachedResultValues(); }
@@ -266,28 +378,64 @@ namespace Software.Sheets
 		public void Save(string path, bool overwrite = false)
 		{
 			string output = Path.GetFullPath(path);
-			if (!Path.GetExtension(output).Equals(Extension, StringComparison.OrdinalIgnoreCase)) throw new NotSupportedException($"Save this workbook as {Extension}; cross-format conversion is not supported.");
-			if (!overwrite && File.Exists(output)) throw new IOException("The output file already exists.");
+			if (!Path.GetExtension(output).Equals(Extension, StringComparison.OrdinalIgnoreCase))
+			{
+				throw new NotSupportedException($"Save this workbook as {Extension}; cross-format conversion is not supported.");
+			}
+
+			if (!overwrite && File.Exists(output))
+			{
+				throw new IOException("The output file already exists.");
+			}
+
 			string temporary = Path.Combine(Path.GetDirectoryName(output)!, $".Software.Sheets-{Guid.NewGuid():N}.tmp");
 			try
 			{
-				for (int index = 0; index < _workbook.NumberOfSheets; index++) _workbook.GetSheetAt(index).ForceFormulaRecalculation = true;
-				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) _workbook.Write(stream, leaveOpen: true);
-				if (overwrite && File.Exists(output)) File.Replace(temporary, output, null); else File.Move(temporary, output);
+				for (int index = 0; index < _workbook.NumberOfSheets; index++)
+				{
+					_workbook.GetSheetAt(index).ForceFormulaRecalculation = true;
+				}
+
+				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+				{
+					_workbook.Write(stream, leaveOpen: true);
+				}
+
+				if (overwrite && File.Exists(output))
+				{
+					File.Replace(temporary, output, null);
+				}
+				else
+				{
+					File.Move(temporary, output);
+				}
+
 				_savedRevision = _revision;
 			}
-			finally { if (File.Exists(temporary)) File.Delete(temporary); }
+			finally { if (File.Exists(temporary))
+				{
+					File.Delete(temporary);
+				}
+			}
 		}
 
 		public static string Address(int row, int column) => new CellReference(row, column).FormatAsString();
 		public static (int Row, int Column) ParseAddress(string address)
 		{
 			var reference = new CellReference(address);
-			if (reference.SheetName != null) throw new ArgumentException("Enter an address in the current sheet, such as A1.");
+			if (reference.SheetName != null)
+			{
+				throw new ArgumentException("Enter an address in the current sheet, such as A1.");
+			}
+
 			CheckAddress(reference.Row, reference.Col);
 			return (reference.Row, reference.Col);
 		}
-		private static void CheckAddress(int row, int column) { if (row is < 0 or >= MaximumRows || column is < 0 or >= MaximumColumns) throw new ArgumentOutOfRangeException(nameof(row), "Use rows 1-10,000 and columns A-IV."); }
+		private static void CheckAddress(int row, int column) { if (row is < 0 or >= MaximumRows || column is < 0 or >= MaximumColumns)
+			{
+				throw new ArgumentOutOfRangeException(nameof(row), "Use rows 1-10,000 and columns A-IV.");
+			}
+		}
 		private static string IndexedColor(short color, string fallback) => color switch { 8 => "#000000", 9 => "#FFFFFF", 10 => "#FF0000", 11 => "#008000", 12 => "#0000FF", 13 => "#FFFF00", 22 => "#C0C0C0", 23 => "#808080", _ => fallback };
 		public void Dispose() => _workbook.Dispose();
 	}

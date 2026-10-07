@@ -57,13 +57,17 @@ namespace Software.Notepad
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
 			foreach (string path in _arguments)
+			{
 				await OpenFileAsync(path);
+			}
 		}
 
 		private void New_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (!_busy)
+			{
 				NewDocument();
+			}
 		}
 
 		private async void Open_Click(object sender, RoutedEventArgs eventArgs)
@@ -72,14 +76,19 @@ namespace Software.Notepad
 			if (dialog.ShowDialog(this) == true)
 			{
 				foreach (string path in dialog.FileNames)
+				{
 					await OpenFileAsync(path);
+				}
 			}
 		}
 
 		public async Task<EditorDocument?> OpenFileAsync(string path)
 		{
 			if (_busy)
+			{
 				return null;
+			}
+
 			SetBusy(true);
 			try
 			{
@@ -95,7 +104,10 @@ namespace Software.Notepad
 				var empty = _documents.Count == 1 && _documents[0].FilePath == null && _documents[0].Text.Length == 0 && !_documents[0].IsDirty ? _documents[0] : null;
 				AddDocument(document);
 				if (empty != null)
+				{
 					RemoveDocument(empty);
+				}
+
 				StatusText.Text = $"Opened {file.Path}";
 				return document;
 			}
@@ -110,7 +122,10 @@ namespace Software.Notepad
 		private void Tab_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			foreach (var document in _documents)
+			{
 				document.Visibility = document == ActiveDocument ? Visibility.Visible : Visibility.Collapsed;
+			}
+
 			if (StructureTree != null)
 			{
 				StructureTree.ItemsSource = null;
@@ -131,7 +146,10 @@ namespace Software.Notepad
 		private void UpdateSettings()
 		{
 			if (ActiveDocument is not EditorDocument document)
+			{
 				return;
+			}
+
 			_updatingSettings = true;
 			LanguageBox.SelectedItem = LanguageBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Content == document.SyntaxLanguage);
 			EncodingBox.SelectedIndex = document.FileEncoding.CodePage switch
@@ -149,13 +167,17 @@ namespace Software.Notepad
 		private async void Save_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is EditorDocument document)
+			{
 				await SaveDocumentAsync(document);
+			}
 		}
 
 		private async void SaveAs_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is EditorDocument document)
+			{
 				await SaveDocumentAsync(document, saveAs: true);
+			}
 		}
 
 		private async void SaveAll_Click(object sender, RoutedEventArgs eventArgs)
@@ -163,20 +185,28 @@ namespace Software.Notepad
 			foreach (var document in _documents.ToArray().Where(document => document.IsDirty))
 			{
 				if (!await SaveDocumentAsync(document))
+				{
 					break;
+				}
 			}
 		}
 
 		public async Task<bool> SaveDocumentAsync(EditorDocument document, bool saveAs = false, string? chosenPath = null)
 		{
 			if (_busy)
+			{
 				return false;
+			}
+
 			string? path = chosenPath ?? document.FilePath;
 			if (saveAs || path == null)
 			{
 				var dialog = new SaveFileDialog { Title = "Save document", FileName = document.FilePath == null ? "" : Path.GetFileName(document.FilePath), Filter = "All files|*.*", OverwritePrompt = true };
 				if (dialog.ShowDialog(this) != true)
+				{
 					return false;
+				}
+
 				path = dialog.FileName;
 			}
 			SetBusy(true);
@@ -185,7 +215,10 @@ namespace Software.Notepad
 				string fullPath = Path.GetFullPath(path);
 				var other = _documents.FirstOrDefault(item => item != document && string.Equals(item.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
 				if (other != null)
+				{
 					throw new IOException("That file is already open in another tab. Close that tab or choose a different save destination.");
+				}
+
 				if (File.Exists(fullPath) && string.Equals(fullPath, document.FilePath, StringComparison.OrdinalIgnoreCase) && document.DiskHash != null)
 				{
 					string diskHash = await Task.Run(() =>
@@ -195,11 +228,16 @@ namespace Software.Notepad
 					});
 					if (diskHash != document.DiskHash && MessageBox.Show(this, "This file changed outside Notepad. Replace the external changes?", "File changed on disk",
 						MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+					{
 						return false;
+					}
 				}
 				else if (chosenPath != null && File.Exists(fullPath) && MessageBox.Show(this, "Replace the existing destination file?", "Save document",
 					MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+				{
 					return false;
+				}
+
 				string text = document.Text;
 				Encoding encoding = document.FileEncoding;
 				string hash = await Task.Run(() => NotepadFile.Save(fullPath, text, encoding, overwrite: true));
@@ -214,7 +252,10 @@ namespace Software.Notepad
 		private async Task<bool> ConfirmCloseAsync(EditorDocument document)
 		{
 			if (!document.IsDirty)
+			{
 				return true;
+			}
+
 			TabStrip.SelectedItem = document;
 			var answer = MessageBox.Show(this, $"Save changes to {document.Title.TrimStart('*', ' ')}?", "Unsaved document", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 			return answer == MessageBoxResult.No || (answer == MessageBoxResult.Yes && await SaveDocumentAsync(document));
@@ -224,22 +265,31 @@ namespace Software.Notepad
 		{
 			eventArgs.Handled = true;
 			if (sender is Button { Tag: EditorDocument document })
+			{
 				await CloseDocumentAsync(document);
+			}
 		}
 
 		private async void CloseActive_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is EditorDocument document)
+			{
 				await CloseDocumentAsync(document);
+			}
 		}
 
 		private async Task CloseDocumentAsync(EditorDocument document)
 		{
 			if (_busy || !await ConfirmCloseAsync(document))
+			{
 				return;
+			}
+
 			RemoveDocument(document);
 			if (_documents.Count == 0)
+			{
 				NewDocument();
+			}
 		}
 
 		private void RemoveDocument(EditorDocument document)
@@ -251,14 +301,19 @@ namespace Software.Notepad
 			_documents.Remove(document);
 			document.Dispose();
 			if (selected && _documents.Count > 0)
+			{
 				TabStrip.SelectedIndex = Math.Min(index, _documents.Count - 1);
+			}
 		}
 
 		private async void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
 			if (_busy || _closingPending) { eventArgs.Cancel = true; return; }
 			if (_closingApproved || _documents.All(document => !document.IsDirty))
+			{
 				return;
+			}
+
 			eventArgs.Cancel = true;
 			_closingPending = true;
 			try
@@ -266,7 +321,9 @@ namespace Software.Notepad
 				foreach (var document in _documents.ToArray())
 				{
 					if (!await ConfirmCloseAsync(document))
+					{
 						return;
+					}
 				}
 				_closingApproved = true;
 			}
@@ -295,7 +352,10 @@ namespace Software.Notepad
 		{
 			SearchPanel.Visibility = Visibility.Visible;
 			if (ActiveDocument is EditorDocument document && document.SelectionLength > 0)
+			{
 				FindBox.Text = document.SelectedText;
+			}
+
 			FindBox.Focus();
 			FindBox.SelectAll();
 		}
@@ -309,12 +369,18 @@ namespace Software.Notepad
 		private void FindNext_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is not EditorDocument document)
+			{
 				return;
+			}
+
 			try
 			{
 				int start = document.SelectionStart + document.SelectionLength;
 				if (document.SelectionLength == 0 && _zeroLengthMatchDocument == document && _zeroLengthMatchOffset == start)
+				{
 					start = start < document.Text.Length ? start + 1 : 0;
+				}
+
 				var match = TextSearch.Find(document.Text, FindBox.Text, start, MatchCase.IsChecked == true, UseRegex.IsChecked == true, WholeWord.IsChecked == true);
 				if (match.Success)
 				{
@@ -336,7 +402,10 @@ namespace Software.Notepad
 		private void Replace_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is not EditorDocument document)
+			{
 				return;
+			}
+
 			try
 			{
 				var pattern = TextSearch.Pattern(FindBox.Text, MatchCase.IsChecked == true, UseRegex.IsChecked == true, WholeWord.IsChecked == true);
@@ -355,7 +424,10 @@ namespace Software.Notepad
 		private void ReplaceAll_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is not EditorDocument document)
+			{
 				return;
+			}
+
 			try
 			{
 				var result = TextSearch.ReplaceAll(document.Text, FindBox.Text, ReplaceBox.Text, MatchCase.IsChecked == true, UseRegex.IsChecked == true, WholeWord.IsChecked == true);
@@ -368,7 +440,9 @@ namespace Software.Notepad
 		private async void Tool_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (sender is MenuItem { Tag: string tool })
+			{
 				await RunToolAsync(tool);
+			}
 		}
 
 		private string ActiveStructuredLanguage => ActiveDocument?.SyntaxLanguage is "XML" or "JSON" ? ActiveDocument.SyntaxLanguage
@@ -381,7 +455,10 @@ namespace Software.Notepad
 		public async Task<bool> RunToolAsync(string tool)
 		{
 			if (_busy || ActiveDocument is not EditorDocument document)
+			{
 				return false;
+			}
+
 			bool xml = tool.StartsWith("Xml", StringComparison.Ordinal);
 			if (tool.EndsWith("QueryMode", StringComparison.Ordinal))
 			{
@@ -395,7 +472,10 @@ namespace Software.Notepad
 			{
 				var dialog = new OpenFileDialog { Title = "Validate against XSD", Filter = "XML schema|*.xsd|All files|*.*" };
 				if (dialog.ShowDialog(this) != true)
+				{
 					return false;
+				}
+
 				try { schema = NotepadFile.Read(dialog.FileName).Text; }
 				catch (Exception exception) { ShowError(exception); return false; }
 			}
@@ -449,7 +529,15 @@ namespace Software.Notepad
 
 			static string Validate(string value, bool xml)
 			{
-				if (xml) StructuredTextTools.ValidateXml(value); else StructuredTextTools.ValidateJson(value);
+				if (xml)
+				{
+					StructuredTextTools.ValidateXml(value);
+				}
+				else
+				{
+					StructuredTextTools.ValidateJson(value);
+				}
+
 				return xml ? "Valid XML." : "Valid JSON.";
 			}
 		}
@@ -463,7 +551,10 @@ namespace Software.Notepad
 		public async Task<bool> RunQueryAsync()
 		{
 			if (_busy || ActiveDocument is not EditorDocument document)
+			{
 				return false;
+			}
+
 			string text = document.Text;
 			string expression = QueryBox.Text;
 			bool xml = QueryMode.SelectedIndex == 1;
@@ -486,7 +577,9 @@ namespace Software.Notepad
 			{
 				QueryBox.Text = node.Path;
 				if (node.Line > 0 && ActiveDocument is EditorDocument document && node.Line <= document.Document.LineCount)
+				{
 					document.ScrollTo(node.Line, Math.Max(1, node.Column));
+				}
 			}
 		}
 
@@ -497,9 +590,13 @@ namespace Software.Notepad
 			ShowInspector(true);
 			StatusText.Text = "Operation failed; document unchanged.";
 			if (exception is System.Xml.XmlException xml && xml.LineNumber > 0)
+			{
 				ActiveDocument?.ScrollTo(xml.LineNumber, Math.Max(1, xml.LinePosition));
+			}
 			else if (exception is System.Text.Json.JsonException json && json.LineNumber is long line)
+			{
 				ActiveDocument?.ScrollTo(checked((int)line + 1), checked((int)(json.BytePositionInLine ?? 0) + 1));
+			}
 		}
 
 		private void SetBusy(bool value)
@@ -528,38 +625,52 @@ namespace Software.Notepad
 		private void Encoding_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
 			if (_updatingSettings || ActiveDocument is not EditorDocument document)
+			{
 				return;
+			}
+
 			Encoding? encoding = EncodingBox.SelectedIndex switch
 			{
 				1 => new UTF8Encoding(false, true), 2 => new UTF8Encoding(true, true),
 				3 => new UnicodeEncoding(false, true, true), 4 => new UnicodeEncoding(true, true, true), _ => null
 			};
 			if (encoding != null)
+			{
 				document.SetEncoding(encoding);
+			}
 		}
 
 		private void Wrap_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			foreach (var document in _documents)
+			{
 				document.WordWrap = WrapMenu.IsChecked;
+			}
 		}
 
 		private void Whitespace_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			foreach (var document in _documents)
+			{
 				document.Options.ShowSpaces = document.Options.ShowTabs = WhitespaceMenu.IsChecked;
+			}
 		}
 
 		private void FontSize_Changed(object sender, RoutedPropertyChangedEventArgs<double> eventArgs)
 		{
 			foreach (var document in _documents)
+			{
 				document.FontSize = eventArgs.NewValue;
+			}
 		}
 
 		private void LineEndings_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			if (ActiveDocument is not EditorDocument document || sender is not MenuItem { Tag: string ending })
+			{
 				return;
+			}
+
 			string normalized = document.Text.Replace("\r\n", "\n").Replace('\r', '\n');
 			string delimiter = ending == "CRLF" ? "\r\n" : ending == "CR" ? "\r" : "\n";
 			document.Document.Replace(0, document.Text.Length, normalized.Replace("\n", delimiter));
@@ -568,7 +679,10 @@ namespace Software.Notepad
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
 			if (_busy)
+			{
 				return;
+			}
+
 			var modifiers = Keyboard.Modifiers;
 			if ((modifiers & ModifierKeys.Control) != 0 && (modifiers & ModifierKeys.Alt) == 0)
 			{
@@ -578,7 +692,11 @@ namespace Software.Notepad
 					case Key.O: eventArgs.Handled = true; Open_Click(sender, new RoutedEventArgs()); break;
 					case Key.S:
 						eventArgs.Handled = true;
-						if (ActiveDocument is EditorDocument document) await SaveDocumentAsync(document, (modifiers & ModifierKeys.Shift) != 0);
+						if (ActiveDocument is EditorDocument document)
+						{
+							await SaveDocumentAsync(document, (modifiers & ModifierKeys.Shift) != 0);
+						}
+
 						break;
 					case Key.W: eventArgs.Handled = true; CloseActive_Click(sender, new RoutedEventArgs()); break;
 					case Key.F or Key.H: eventArgs.Handled = true; ShowSearch_Click(sender, new RoutedEventArgs()); break;
@@ -605,7 +723,9 @@ namespace Software.Notepad
 			if (!_busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] paths)
 			{
 				foreach (string path in paths)
+				{
 					await OpenFileAsync(path);
+				}
 			}
 		}
 	}

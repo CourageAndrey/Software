@@ -26,7 +26,9 @@ namespace Software.MergeTool
 			string[] leftSegments = GetSegments(left);
 			string[] rightSegments = GetSegments(right);
 			if (leftSegments.Length > MaximumLines || rightSegments.Length > MaximumLines)
+			{
 				throw new InvalidDataException($"Compare files with at most {MaximumLines:N0} lines each.");
+			}
 
 			var model = new SideBySideDiffBuilder().BuildDiffModel(left, right, ignoreWhitespace: false, ignoreCase: false);
 			var rows = new List<ComparisonRow>();
@@ -56,7 +58,9 @@ namespace Software.MergeTool
 					rightBlock.Append(rightSegment);
 				}
 				else
+				{
 					FinishBlock(index);
+				}
 
 				rows.Add(new ComparisonRow(leftPiece.Text ?? "", rightPiece.Text ?? "", leftPiece.Position, rightPiece.Position,
 					different && leftPiece.Type == ChangeType.Unchanged ? ChangeType.Modified : leftPiece.Type,
@@ -69,7 +73,10 @@ namespace Software.MergeTool
 			void FinishBlock(int endRow)
 			{
 				if (startRow < 0)
+				{
 					return;
+				}
+
 				blocks.Add(new DifferenceBlock(startRow, endRow - startRow, blockOffset, leftBlock.ToString(), rightBlock.ToString()));
 				startRow = -1;
 				leftBlock.Clear();
@@ -87,7 +94,10 @@ namespace Software.MergeTool
 				int length = contents[index].Length;
 				int delimiterOffset = offset + length;
 				if (delimiterOffset < text.Length)
+				{
 					length += text[delimiterOffset] == '\r' && delimiterOffset + 1 < text.Length && text[delimiterOffset + 1] == '\n' ? 2 : 1;
+				}
+
 				segments[index] = text.Substring(offset, length);
 				offset += length;
 			}
@@ -104,12 +114,17 @@ namespace Software.MergeTool
 			string fullPath = System.IO.Path.GetFullPath(path);
 			using var stream = File.OpenRead(fullPath);
 			if (stream.Length > MaximumFileBytes)
+			{
 				throw new InvalidDataException("Choose text files of 5 MiB or less.");
+			}
+
 			using var buffer = new MemoryStream();
 			stream.CopyTo(buffer);
 			byte[] bytes = buffer.ToArray();
 			if (bytes.Length > MaximumFileBytes)
+			{
 				throw new InvalidDataException("Choose text files of 5 MiB or less.");
+			}
 
 			Encoding encoding = new UTF8Encoding(false, true);
 			int preamble = 0;
@@ -140,7 +155,10 @@ namespace Software.MergeTool
 			}
 			string text = encoding.GetString(bytes, preamble, bytes.Length - preamble);
 			if (text.Contains('\0'))
+			{
 				throw new InvalidDataException("Binary files are not supported.");
+			}
+
 			return new TextFileDocument(fullPath, text, encoding);
 		}
 
@@ -148,22 +166,34 @@ namespace Software.MergeTool
 		{
 			string output = System.IO.Path.GetFullPath(path);
 			if (File.Exists(output) && !overwrite)
+			{
 				throw new IOException("The output file already exists.");
+			}
+
 			string temporary = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(output)!, $".Software.MergeTool-{Guid.NewGuid():N}.tmp");
 			try
 			{
 				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
 				using (var writer = new StreamWriter(stream, encoding))
+				{
 					writer.Write(text);
+				}
+
 				if (overwrite && File.Exists(output))
+				{
 					File.Replace(temporary, output, null);
+				}
 				else
+				{
 					File.Move(temporary, output);
+				}
 			}
 			finally
 			{
 				if (File.Exists(temporary))
+				{
 					File.Delete(temporary);
+				}
 			}
 		}
 	}

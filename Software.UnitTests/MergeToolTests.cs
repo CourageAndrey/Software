@@ -71,7 +71,10 @@ namespace Software.UnitTests
 				string right = GenerateText();
 				string result = left;
 				foreach (var block in MergeComparison.Compare(left, right).Differences.Reverse())
+				{
 					result = result.Remove(block.LeftOffset, block.LeftText.Length).Insert(block.LeftOffset, block.RightText);
+				}
+
 				Assert.That(result, Is.EqualTo(right), $"Round trip {iteration}");
 			}
 
@@ -158,7 +161,10 @@ namespace Software.UnitTests
 		public void TearDown()
 		{
 			while (Result.CanUndo)
+			{
 				Result.Undo();
+			}
+
 			((ComboBox)_window.FindName("EncodingBox")).SelectedIndex = 0;
 			_window.Close();
 			Directory.Delete(_root, recursive: true);

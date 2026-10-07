@@ -10,7 +10,11 @@ namespace Software.Sheets
 		public int Index { get; } = index;
 		public int Number => Index + 1;
 		public SheetCell this[int column] => _cells.TryGetValue(column, out var cell) ? cell : _cells[column] = new SheetCell(book, Index, column);
-		public void Refresh() { foreach (var cell in _cells.Values) cell.Refresh(); }
+		public void Refresh() { foreach (var cell in _cells.Values)
+			{
+				cell.Refresh();
+			}
+		}
 	}
 
 	public sealed class SheetCell(SpreadsheetBook book, int row, int column) : INotifyPropertyChanged
