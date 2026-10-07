@@ -59,8 +59,6 @@ namespace Software.FileCommander
 
 				CurrentPath = fullPath;
 				PathBox.Text = fullPath;
-				FolderHeading.Text = fullPath;
-				FolderHeading.ToolTip = fullPath;
 				FileList.ItemsSource = entries;
 				_iconLoading?.Cancel();
 				_iconLoading?.Dispose();
