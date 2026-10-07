@@ -17,7 +17,7 @@ namespace Software.TextProcessor
 	public static class DocumentFiles
 	{
 		public const long MaximumFileBytes = 20L * 1024 * 1024;
-		private const long MaximumExpandedBytes = 100L * 1024 * 1024;
+		private const long _maximumExpandedBytes = 100L * 1024 * 1024;
 
 		static DocumentFiles() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -122,7 +122,7 @@ namespace Software.TextProcessor
 			long total = 0;
 			foreach (var entry in zip.Entries)
 			{
-				if (entry.Length > MaximumExpandedBytes - total)
+				if (entry.Length > _maximumExpandedBytes - total)
 					throw new InvalidDataException("The DOCX exceeds the 100 MiB expanded-size limit.");
 				total += entry.Length;
 			}

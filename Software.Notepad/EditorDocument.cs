@@ -13,28 +13,28 @@ namespace Software.Notepad
 {
 	public sealed class EditorDocument : TextEditor, IDisposable
 	{
-		private readonly FoldingManager folding;
-		private readonly DispatcherTimer foldingTimer;
-		private readonly string untitledName;
-		private string savedText;
-		private string savedEncoding;
-		private string? language;
+		private readonly FoldingManager _folding;
+		private readonly DispatcherTimer _foldingTimer;
+		private readonly string _untitledName;
+		private string _savedText;
+		private string _savedEncoding;
+		private string? _language;
 
 		public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(nameof(Title), typeof(string), typeof(EditorDocument));
 		public string Title { get => (string)GetValue(TitleProperty); private set => SetValue(TitleProperty, value); }
 		public string? FilePath { get; private set; }
 		public Encoding FileEncoding { get; private set; }
 		public string? DiskHash { get; private set; }
-		public FoldingManager Foldings => folding;
-		public bool IsDirty => Text != savedText || EncodingId(FileEncoding) != savedEncoding;
+		public FoldingManager Foldings => _folding;
+		public bool IsDirty => Text != _savedText || EncodingId(FileEncoding) != _savedEncoding;
 		public event Action<EditorDocument>? StateChanged;
 
 		public string SyntaxLanguage
 		{
-			get => language ?? "Text";
+			get => _language ?? "Text";
 			set
 			{
-				language = value;
+				_language = value;
 				SyntaxHighlighting = HighlightingManager.Instance.GetDefinition(value == "Text" ? "" : value);
 				UpdateFoldings();
 				StateChanged?.Invoke(this);
@@ -43,12 +43,12 @@ namespace Software.Notepad
 
 		public EditorDocument(string name, string text = "", Encoding? encoding = null, string? path = null, string? diskHash = null)
 		{
-			untitledName = name;
+			_untitledName = name;
 			FilePath = path;
 			DiskHash = diskHash;
 			FileEncoding = encoding ?? new UTF8Encoding(false, true);
-			savedEncoding = EncodingId(FileEncoding);
-			savedText = text;
+			_savedEncoding = EncodingId(FileEncoding);
+			_savedText = text;
 			FontFamily = new FontFamily("Cascadia Mono, Consolas");
 			FontSize = 14;
 			Background = Brushes.White;
@@ -60,14 +60,14 @@ namespace Software.Notepad
 			Options.HighlightCurrentLine = true;
 			Text = text;
 			Document.UndoStack.ClearAll();
-			folding = FoldingManager.Install(TextArea);
-			foldingTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(650) };
-			foldingTimer.Tick += (_, _) => { foldingTimer.Stop(); UpdateFoldings(); };
+			_folding = FoldingManager.Install(TextArea);
+			_foldingTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(650) };
+			_foldingTimer.Tick += (_, _) => { _foldingTimer.Stop(); UpdateFoldings(); };
 			TextChanged += (_, _) =>
 			{
 				UpdateTitle();
-				foldingTimer.Stop();
-				foldingTimer.Start();
+				_foldingTimer.Stop();
+				_foldingTimer.Start();
 				StateChanged?.Invoke(this);
 			};
 			TextArea.Caret.PositionChanged += (_, _) => StateChanged?.Invoke(this);
@@ -86,13 +86,13 @@ namespace Software.Notepad
 		{
 			FilePath = path;
 			DiskHash = hash;
-			savedText = Text;
-			savedEncoding = EncodingId(FileEncoding);
+			_savedText = Text;
+			_savedEncoding = EncodingId(FileEncoding);
 			UpdateTitle();
 			StateChanged?.Invoke(this);
 		}
 
-		private void UpdateTitle() => Title = (IsDirty ? "* " : "") + (FilePath == null ? untitledName : Path.GetFileName(FilePath));
+		private void UpdateTitle() => Title = (IsDirty ? "* " : "") + (FilePath == null ? _untitledName : Path.GetFileName(FilePath));
 
 		public static string GuessLanguage(string? path, string text)
 		{
@@ -119,13 +119,13 @@ namespace Software.Notepad
 			{
 				if (Text.Length > StructuredTextTools.MaximumCharacters)
 				{
-					folding.UpdateFoldings([], -1);
+					_folding.UpdateFoldings([], -1);
 					return;
 				}
 				if (SyntaxLanguage == "XML")
 				{
 					StructuredTextTools.ValidateXml(Text);
-					new XmlFoldingStrategy().UpdateFoldings(folding, Document);
+					new XmlFoldingStrategy().UpdateFoldings(_folding, Document);
 				}
 				else if (SyntaxLanguage == "JSON")
 				{
@@ -149,14 +149,14 @@ namespace Software.Notepad
 								folds.Add(new NewFolding(start, characterOffset + 1));
 						}
 					}
-					folding.UpdateFoldings(folds.OrderBy(item => item.StartOffset), -1);
+					_folding.UpdateFoldings(folds.OrderBy(item => item.StartOffset), -1);
 				}
 				else
-					folding.UpdateFoldings([], -1);
+					_folding.UpdateFoldings([], -1);
 			}
 			catch (Exception exception) when (exception is JsonException or System.Xml.XmlException or InvalidOperationException)
 			{
-				folding.UpdateFoldings([], -1);
+				_folding.UpdateFoldings([], -1);
 			}
 		}
 
@@ -164,8 +164,8 @@ namespace Software.Notepad
 
 		public void Dispose()
 		{
-			foldingTimer.Stop();
-			FoldingManager.Uninstall(folding);
+			_foldingTimer.Stop();
+			FoldingManager.Uninstall(_folding);
 		}
 	}
 

@@ -15,11 +15,11 @@ namespace Software.UnitTests
 	[Apartment(ApartmentState.STA)]
 	public class TextProcessorFileTests
 	{
-		private string root = null!;
+		private string _root = null!;
 		[SetUp]
-		public void Setup() => root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"TextProcessorTests-{Guid.NewGuid():N}")).FullName;
+		public void Setup() => _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"TextProcessorTests-{Guid.NewGuid():N}")).FullName;
 		[TearDown]
-		public void TearDown() => Directory.Delete(root, recursive: true);
+		public void TearDown() => Directory.Delete(_root, recursive: true);
 
 		private static string Text(FlowDocument document) => new TextRange(document.ContentStart, document.ContentEnd).Text;
 
@@ -31,7 +31,7 @@ namespace Software.UnitTests
 			var run = new Run("formatted text") { FontWeight = FontWeights.Bold, FontStyle = FontStyles.Italic, FontSize = 24,
 				TextDecorations = TextDecorations.Underline, Foreground = Brushes.Red };
 			document.Blocks.Add(new Paragraph(run) { TextAlignment = TextAlignment.Center });
-			string path = Path.Combine(root, "rich" + extension);
+			string path = Path.Combine(_root, "rich" + extension);
 			DocumentFiles.Save(path, document);
 			var opened = DocumentFiles.Open(path).Document;
 			Assert.That(Text(opened), Does.Contain("formatted text"));
@@ -60,7 +60,7 @@ namespace Software.UnitTests
 			var bitmap = BitmapSource.Create(2, 2, 96, 96, PixelFormats.Bgra32, null, new byte[16], 8);
 			bitmap.Freeze();
 			document.Blocks.Add(new Paragraph(new InlineUIContainer(new Image { Source = bitmap, Width = 20 })));
-			string path = Path.Combine(root, "objects.docx");
+			string path = Path.Combine(_root, "objects.docx");
 			DocumentFiles.Save(path, document);
 			AssertValidDocx(path);
 			var opened = DocumentFiles.Open(path).Document;
@@ -83,33 +83,33 @@ namespace Software.UnitTests
 		[Test]
 		public void PlainTextCanBeOpenedAndSaved()
 		{
-			string path = Path.Combine(root, "plain.txt");
+			string path = Path.Combine(_root, "plain.txt");
 			File.WriteAllText(path, "first\nsecond");
 			var loaded = DocumentFiles.Open(path);
 			Assert.That(Text(loaded.Document), Does.Contain("first").And.Contain("second"));
-			DocumentFiles.Save(Path.Combine(root, "copy.txt"), loaded.Document);
-			Assert.That(File.ReadAllText(Path.Combine(root, "copy.txt")), Does.Contain("first"));
+			DocumentFiles.Save(Path.Combine(_root, "copy.txt"), loaded.Document);
+			Assert.That(File.ReadAllText(Path.Combine(_root, "copy.txt")), Does.Contain("first"));
 		}
 
 		[Test]
 		public void SaveRefusesUnrequestedOverwriteAndLegacyDocOutput()
 		{
-			string path = Path.Combine(root, "file.rtf");
+			string path = Path.Combine(_root, "file.rtf");
 			var document = DocumentFiles.NewDocument();
 			document.Blocks.Add(new Paragraph(new Run("original")));
 			DocumentFiles.Save(path, document);
 			byte[] original = File.ReadAllBytes(path);
 			Assert.Throws<IOException>(() => DocumentFiles.Save(path, document));
 			Assert.That(File.ReadAllBytes(path), Is.EqualTo(original));
-			Assert.Throws<NotSupportedException>(() => DocumentFiles.Save(Path.Combine(root, "file.doc"), document));
-			Assert.That(Directory.GetFiles(root, ".Software.TextProcessor-*.tmp"), Is.Empty);
+			Assert.Throws<NotSupportedException>(() => DocumentFiles.Save(Path.Combine(_root, "file.doc"), document));
+			Assert.That(Directory.GetFiles(_root, ".Software.TextProcessor-*.tmp"), Is.Empty);
 		}
 
 		[Test]
 		public void InvalidWordDocumentsFailInsteadOfOpeningAsGibberish()
 		{
-			string doc = Path.Combine(root, "invalid.doc");
-			string docx = Path.Combine(root, "invalid.docx");
+			string doc = Path.Combine(_root, "invalid.doc");
+			string docx = Path.Combine(_root, "invalid.docx");
 			File.WriteAllText(doc, "not a Word document");
 			File.WriteAllText(docx, "not a Word document");
 			Assert.Catch(() => DocumentFiles.Open(doc));
@@ -127,23 +127,23 @@ namespace Software.UnitTests
 	[Apartment(ApartmentState.STA)]
 	public class TextProcessorUiTests
 	{
-		private MainWindow window = null!;
-		private string root = null!;
-		private RichTextBox Editor => (RichTextBox)window.FindName("Editor");
+		private MainWindow _window = null!;
+		private string _root = null!;
+		private RichTextBox Editor => (RichTextBox)_window.FindName("Editor");
 		private string Text => new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Text;
 
 		[SetUp]
 		public void Setup()
 		{
-			root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"TextProcessorUiTests-{Guid.NewGuid():N}")).FullName;
-			window = new MainWindow(); window.Show();
+			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"TextProcessorUiTests-{Guid.NewGuid():N}")).FullName;
+			_window = new MainWindow(); _window.Show();
 		}
 
 		[TearDown]
 		public void TearDown()
 		{
-			RunOnDispatcher(async () => Assert.That(await window.SaveDocumentAsync(chosenPath: Path.Combine(root, "cleanup.rtf")), Is.True));
-			window.Close(); Directory.Delete(root, recursive: true);
+			RunOnDispatcher(async () => Assert.That(await _window.SaveDocumentAsync(chosenPath: Path.Combine(_root, "cleanup.rtf")), Is.True));
+			_window.Close(); Directory.Delete(_root, recursive: true);
 		}
 
 		[Test]
@@ -151,9 +151,9 @@ namespace Software.UnitTests
 		{
 			Editor.Selection.Text = "sample";
 			Editor.SelectAll(); Editor.Focus();
-			((ToggleButton)window.FindName("BoldButton")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+			((ToggleButton)_window.FindName("BoldButton")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
 			Assert.That(Editor.Selection.GetPropertyValue(TextElement.FontWeightProperty), Is.EqualTo(FontWeights.Bold));
-			Assert.That(window.IsDirty, Is.True);
+			Assert.That(_window.IsDirty, Is.True);
 			Editor.Undo();
 			Assert.That(Editor.Selection.GetPropertyValue(TextElement.FontWeightProperty), Is.Not.EqualTo(FontWeights.Bold));
 		}
@@ -163,11 +163,11 @@ namespace Software.UnitTests
 		{
 			Editor.Document.Blocks.Clear();
 			Editor.Document.Blocks.Add(new Paragraph(new Run("one ")) { Inlines = { new Bold(new Run("one")) } });
-			((TextBox)window.FindName("FindBox")).Text = "one";
-			((Button)window.FindName("FindNextButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			((TextBox)_window.FindName("FindBox")).Text = "one";
+			((Button)_window.FindName("FindNextButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			Assert.That(Editor.Selection.Text, Is.EqualTo("one"));
-			((TextBox)window.FindName("ReplaceBox")).Text = "two";
-			((Button)window.FindName("ReplaceAllButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			((TextBox)_window.FindName("ReplaceBox")).Text = "two";
+			((Button)_window.FindName("ReplaceAllButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			Assert.That(Text.Trim(), Is.EqualTo("two two"));
 			Editor.Undo();
 			Assert.That(Text.Trim(), Is.EqualTo("one one"));
@@ -180,26 +180,26 @@ namespace Software.UnitTests
 			{
 				var original = DocumentFiles.NewDocument();
 				original.Blocks.Add(new Paragraph(new Run("loaded")));
-				string path = Path.Combine(root, "source.docx");
+				string path = Path.Combine(_root, "source.docx");
 				DocumentFiles.Save(path, original);
-				Assert.That(await window.OpenDocumentAsync(path), Is.True);
-				Assert.That(window.IsDirty, Is.False);
+				Assert.That(await _window.OpenDocumentAsync(path), Is.True);
+				Assert.That(_window.IsDirty, Is.False);
 				Assert.That(Text, Does.Contain("loaded"));
-				window.InsertTable(2, 3);
+				_window.InsertTable(2, 3);
 				Assert.That(Editor.Document.Blocks.OfType<Table>().Single().RowGroups[0].Rows.Count, Is.EqualTo(2));
-				Assert.That(await window.SaveDocumentAsync(chosenPath: Path.Combine(root, "result.docx")), Is.True);
-				Assert.That(window.IsDirty, Is.False);
-				Assert.That(DocumentFiles.Open(Path.Combine(root, "result.docx")).Document.Blocks.OfType<Table>(), Is.Not.Empty);
+				Assert.That(await _window.SaveDocumentAsync(chosenPath: Path.Combine(_root, "result.docx")), Is.True);
+				Assert.That(_window.IsDirty, Is.False);
+				Assert.That(DocumentFiles.Open(Path.Combine(_root, "result.docx")).Document.Blocks.OfType<Table>(), Is.Not.Empty);
 			});
 		}
 
 		private void RunOnDispatcher(Func<Task> action)
 		{
-			Task task = window.Dispatcher.InvokeAsync(action).Task.Unwrap();
+			Task task = _window.Dispatcher.InvokeAsync(action).Task.Unwrap();
 			var frame = new DispatcherFrame();
 			var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
 			timeout.Tick += (_, _) => frame.Continue = false;
-			_ = task.ContinueWith(_ => window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
+			_ = task.ContinueWith(_ => _window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
 			timeout.Start(); Dispatcher.PushFrame(frame); timeout.Stop();
 			Assert.That(task.IsCompleted, Is.True, "Text Processor did not finish within 15 seconds.");
 			task.GetAwaiter().GetResult();

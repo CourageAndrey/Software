@@ -12,21 +12,21 @@ namespace Software.UnitTests
 	[Apartment(ApartmentState.STA)]
 	public class BrowserTests
 	{
-		private MainWindow window = null!;
+		private MainWindow _window = null!;
 
 		[SetUp]
-		public void Setup() => window = new MainWindow();
+		public void Setup() => _window = new MainWindow();
 
 		[TearDown]
-		public void TearDown() => window.Close();
+		public void TearDown() => _window.Close();
 
-		private Grid TabHost => (Grid)window.FindName("TabHost");
+		private Grid TabHost => (Grid)_window.FindName("TabHost");
 
-		private ListBox TabStrip => (ListBox)window.FindName("TabStrip");
+		private ListBox TabStrip => (ListBox)_window.FindName("TabStrip");
 
 		private BrowserTab[] Tabs => TabHost.Children.OfType<BrowserTab>().ToArray();
 
-		private void AddTab() => ((Button)window.FindName("NewTabButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+		private void AddTab() => ((Button)_window.FindName("NewTabButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
 		private void CloseTab(BrowserTab tab)
 		{
@@ -105,7 +105,7 @@ namespace Software.UnitTests
 		public void ClosingTheLastTabClosesTheWindow()
 		{
 			bool closed = false;
-			window.Closed += (_, _) => closed = true;
+			_window.Closed += (_, _) => closed = true;
 			CloseTab(Tabs[0]);
 			Assert.That(closed, Is.True);
 		}
@@ -123,12 +123,12 @@ namespace Software.UnitTests
 			}
 
 			AddTab();
-			var operation = window.Dispatcher.InvokeAsync(VerifyChromiumAsync);
+			var operation = _window.Dispatcher.InvokeAsync(VerifyChromiumAsync);
 			Task task = operation.Task.Unwrap();
 			var frame = new DispatcherFrame();
 			var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
 			timeout.Tick += (_, _) => frame.Continue = false;
-			_ = task.ContinueWith(_ => window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
+			_ = task.ContinueWith(_ => _window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
 			timeout.Start();
 			Dispatcher.PushFrame(frame);
 			timeout.Stop();
@@ -139,7 +139,7 @@ namespace Software.UnitTests
 		private async Task VerifyChromiumAsync()
 		{
 			var browsers = Tabs.Select(tab => (WebView2)tab.FindName("Browser")).ToArray();
-			window.Show();
+			_window.Show();
 
 			for (int index = 0; index < browsers.Length; index++)
 			{
@@ -176,7 +176,7 @@ namespace Software.UnitTests
 				Assert.That(await browsers[index].ExecuteScriptAsync("window.savedState"), Is.EqualTo(index.ToString()));
 				Assert.That(Tabs[index].Title, Is.EqualTo($"Tab {index}"));
 				Assert.That(((TextBox)Tabs[index].FindName("AddressBox")).Text, Is.EqualTo("about:blank"));
-				Assert.That(window.Title, Is.EqualTo($"Tab {index} - Web Browser"));
+				Assert.That(_window.Title, Is.EqualTo($"Tab {index} - Web Browser"));
 			}
 
 			var popupRequested = new TaskCompletionSource<BrowserTab>();

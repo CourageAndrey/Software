@@ -8,13 +8,13 @@ namespace Software.WebBrowser
 {
 	public partial class BrowserTab : UserControl, IDisposable
 	{
-		private const string HomeAddress = "about:blank";
-		private static Task<CoreWebView2Environment>? environmentTask;
-		private readonly bool navigateHome;
-		private Task? initializationTask;
-		private bool initialized;
-		private bool disposed;
-		private bool loading;
+		private const string _homeAddress = "about:blank";
+		private static Task<CoreWebView2Environment>? _environmentTask;
+		private readonly bool _navigateHome;
+		private Task? _initializationTask;
+		private bool _initialized;
+		private bool _disposed;
+		private bool _loading;
 
 		public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
 			nameof(Title), typeof(string), typeof(BrowserTab), new PropertyMetadata("New tab"));
@@ -25,30 +25,30 @@ namespace Software.WebBrowser
 			private set => SetValue(TitleProperty, value);
 		}
 
-		public CoreWebView2? Core => disposed ? null : Browser.CoreWebView2;
+		public CoreWebView2? Core => _disposed ? null : Browser.CoreWebView2;
 
 		public event Action<CoreWebView2NewWindowRequestedEventArgs>? NewTabRequested;
 
 		public BrowserTab(bool navigateHome = true)
 		{
-			this.navigateHome = navigateHome;
+			this._navigateHome = navigateHome;
 			InitializeComponent();
 		}
 
 		private async void Tab_Loaded(object sender, RoutedEventArgs eventArgs) => await InitializeAsync();
 
-		public Task InitializeAsync() => initializationTask ??= InitializeBrowserAsync();
+		public Task InitializeAsync() => _initializationTask ??= InitializeBrowserAsync();
 
 		private async void Retry_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (!initialized && initializationTask?.IsCompleted == true)
-				initializationTask = null;
+			if (!_initialized && _initializationTask?.IsCompleted == true)
+				_initializationTask = null;
 			await InitializeAsync();
 		}
 
 		private async Task InitializeBrowserAsync()
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			RetryButton.Visibility = Visibility.Collapsed;
@@ -57,14 +57,14 @@ namespace Software.WebBrowser
 			{
 				string profilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 					"Software", "WebBrowser", "UserData");
-				if (environmentTask == null || environmentTask.IsFaulted)
-					environmentTask = CoreWebView2Environment.CreateAsync(userDataFolder: profilePath);
-				var environment = await environmentTask;
-				if (disposed)
+				if (_environmentTask == null || _environmentTask.IsFaulted)
+					_environmentTask = CoreWebView2Environment.CreateAsync(userDataFolder: profilePath);
+				var environment = await _environmentTask;
+				if (_disposed)
 					return;
 
 				await Browser.EnsureCoreWebView2Async(environment);
-				if (disposed)
+				if (_disposed)
 					return;
 
 				Browser.CoreWebView2.NavigationStarting += NavigationStarting;
@@ -74,14 +74,14 @@ namespace Software.WebBrowser
 				Browser.CoreWebView2.DocumentTitleChanged += DocumentTitleChanged;
 				Browser.CoreWebView2.NewWindowRequested += NewWindowRequested;
 				Browser.CoreWebView2.ProcessFailed += ProcessFailed;
-				initialized = true;
+				_initialized = true;
 				AddressBox.IsEnabled = GoButton.IsEnabled = HomeButton.IsEnabled = ReloadButton.IsEnabled = true;
-				if (navigateHome)
-					Browser.CoreWebView2.Navigate(HomeAddress);
+				if (_navigateHome)
+					Browser.CoreWebView2.Navigate(_homeAddress);
 			}
 			catch (Exception exception)
 			{
-				if (!disposed)
+				if (!_disposed)
 				{
 					StatusText.Text = exception is WebView2RuntimeNotFoundException
 						? "Install the Microsoft Edge WebView2 Runtime, then retry."
@@ -99,7 +99,7 @@ namespace Software.WebBrowser
 
 		private void NavigateAddress()
 		{
-			if (!initialized || disposed)
+			if (!_initialized || _disposed)
 				return;
 
 			string input = AddressBox.Text.Trim();
@@ -149,17 +149,17 @@ namespace Software.WebBrowser
 
 		private void Reload_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (loading)
+			if (_loading)
 				Browser.CoreWebView2.Stop();
 			else
 				Browser.Reload();
 		}
 
-		private void Home_Click(object sender, RoutedEventArgs eventArgs) => Browser.CoreWebView2.Navigate(HomeAddress);
+		private void Home_Click(object sender, RoutedEventArgs eventArgs) => Browser.CoreWebView2.Navigate(_homeAddress);
 
 		private void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs eventArgs)
 		{
-			loading = true;
+			_loading = true;
 			ReloadButton.Content = "\uE711";
 			ReloadButton.ToolTip = "Stop";
 			StatusText.Text = "Loading...";
@@ -167,7 +167,7 @@ namespace Software.WebBrowser
 
 		private void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs eventArgs)
 		{
-			loading = false;
+			_loading = false;
 			ReloadButton.Content = "\uE72C";
 			ReloadButton.ToolTip = "Reload";
 			AddressBox.Text = Browser.CoreWebView2.Source;
@@ -207,10 +207,10 @@ namespace Software.WebBrowser
 
 		public void Dispose()
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
-			disposed = true;
+			_disposed = true;
 			Browser.Dispose();
 			GC.SuppressFinalize(this);
 		}

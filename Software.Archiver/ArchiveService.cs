@@ -255,14 +255,14 @@ namespace Software.Archiver
 
 		private sealed class TarContentStream : Stream
 		{
-			private readonly FileStream source;
-			private long remaining;
+			private readonly FileStream _source;
+			private long _remaining;
 
 			public TarContentStream(string path, long offset, long length)
 			{
-				source = File.OpenRead(path);
-				source.Position = offset;
-				remaining = length;
+				_source = File.OpenRead(path);
+				_source.Position = offset;
+				_remaining = length;
 			}
 
 			public override bool CanRead => true;
@@ -277,19 +277,19 @@ namespace Software.Archiver
 
 			public override int Read(byte[] buffer, int offset, int count)
 			{
-				if (remaining == 0)
+				if (_remaining == 0)
 					return 0;
-				int read = source.Read(buffer, offset, (int)Math.Min(count, remaining));
+				int read = _source.Read(buffer, offset, (int)Math.Min(count, _remaining));
 				if (read == 0)
 					throw new EndOfStreamException("TAR entry data is incomplete.");
-				remaining -= read;
+				_remaining -= read;
 				return read;
 			}
 
 			protected override void Dispose(bool disposing)
 			{
 				if (disposing)
-					source.Dispose();
+					_source.Dispose();
 				base.Dispose(disposing);
 			}
 		}

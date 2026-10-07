@@ -129,11 +129,11 @@ namespace Software.UnitTests
 
 	public class NotepadFileTests
 	{
-		private string root = null!;
+		private string _root = null!;
 		[SetUp]
-		public void Setup() => root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"NotepadFileTests-{Guid.NewGuid():N}")).FullName;
+		public void Setup() => _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"NotepadFileTests-{Guid.NewGuid():N}")).FullName;
 		[TearDown]
-		public void TearDown() => Directory.Delete(root, recursive: true);
+		public void TearDown() => Directory.Delete(_root, recursive: true);
 
 		[TestCase(0)]
 		[TestCase(1)]
@@ -146,33 +146,33 @@ namespace Software.UnitTests
 				1 => new UTF8Encoding(true, true), 2 => new UnicodeEncoding(false, true, true),
 				3 => new UnicodeEncoding(true, true, true), _ => new UTF8Encoding(false, true)
 			};
-			string path = Path.Combine(root, "file.txt");
+			string path = Path.Combine(_root, "file.txt");
 			string text = "first\r\nlast\n";
 			string hash = NotepadFile.Save(path, text, encoding);
 			var file = NotepadFile.Read(path);
 			Assert.That(file.Text, Is.EqualTo(text));
 			Assert.That(file.Hash, Is.EqualTo(hash));
 			Assert.That(file.Encoding.GetPreamble(), Is.EqualTo(encoding.GetPreamble()));
-			NotepadFile.Save(Path.Combine(root, "copy.txt"), file.Text, file.Encoding);
-			Assert.That(File.ReadAllBytes(Path.Combine(root, "copy.txt")), Is.EqualTo(File.ReadAllBytes(path)));
+			NotepadFile.Save(Path.Combine(_root, "copy.txt"), file.Text, file.Encoding);
+			Assert.That(File.ReadAllBytes(Path.Combine(_root, "copy.txt")), Is.EqualTo(File.ReadAllBytes(path)));
 		}
 
 		[Test]
 		public void FileWritesRefuseUnrequestedOverwriteAndLeaveNoTemporaryFiles()
 		{
-			string path = Path.Combine(root, "file.txt");
+			string path = Path.Combine(_root, "file.txt");
 			NotepadFile.Save(path, "old", new UTF8Encoding(false));
 			Assert.Throws<IOException>(() => NotepadFile.Save(path, "new", new UTF8Encoding(false)));
 			Assert.That(File.ReadAllText(path), Is.EqualTo("old"));
 			NotepadFile.Save(path, "new", new UTF8Encoding(false), overwrite: true);
 			Assert.That(File.ReadAllText(path), Is.EqualTo("new"));
-			Assert.That(Directory.GetFiles(root, ".Software.Notepad-*.tmp"), Is.Empty);
+			Assert.That(Directory.GetFiles(_root, ".Software.Notepad-*.tmp"), Is.Empty);
 		}
 
 		[Test]
 		public void BinaryInputIsRejected()
 		{
-			string path = Path.Combine(root, "binary");
+			string path = Path.Combine(_root, "binary");
 			File.WriteAllBytes(path, [65, 0, 66]);
 			Assert.Throws<InvalidDataException>(() => NotepadFile.Read(path));
 		}
@@ -181,34 +181,34 @@ namespace Software.UnitTests
 	[Apartment(ApartmentState.STA)]
 	public class NotepadUiTests
 	{
-		private MainWindow window = null!;
-		private string root = null!;
-		private ListBox Tabs => (ListBox)window.FindName("TabStrip");
-		private TextBox Results => (TextBox)window.FindName("QueryResults");
+		private MainWindow _window = null!;
+		private string _root = null!;
+		private ListBox Tabs => (ListBox)_window.FindName("TabStrip");
+		private TextBox Results => (TextBox)_window.FindName("QueryResults");
 
 		[SetUp]
 		public void Setup()
 		{
-			root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"NotepadUiTests-{Guid.NewGuid():N}")).FullName;
-			window = new MainWindow();
-			window.Show();
+			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"NotepadUiTests-{Guid.NewGuid():N}")).FullName;
+			_window = new MainWindow();
+			_window.Show();
 		}
 
 		[TearDown]
 		public void TearDown()
 		{
 			foreach (var document in Tabs.Items.Cast<EditorDocument>())
-				document.MarkSaved(Path.Combine(root, "discard.txt"), "test-only");
-			window.Close();
-			Directory.Delete(root, recursive: true);
+				document.MarkSaved(Path.Combine(_root, "discard.txt"), "test-only");
+			_window.Close();
+			Directory.Delete(_root, recursive: true);
 		}
 
 		[Test]
 		public void TabSwitchingPreservesTextAndUndoHistory()
 		{
-			var first = window.ActiveDocument!;
+			var first = _window.ActiveDocument!;
 			first.Document.Insert(0, "first");
-			var second = window.NewDocument();
+			var second = _window.NewDocument();
 			second.Document.Insert(0, "second");
 			Tabs.SelectedItem = first;
 			Assert.That(first.Text, Is.EqualTo("first"));
@@ -223,8 +223,8 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				var document = window.NewDocument("{\"a\":{\"b\":1}}");
-				Assert.That(await window.RunToolAsync("JsonFormat"), Is.True);
+				var document = _window.NewDocument("{\"a\":{\"b\":1}}");
+				Assert.That(await _window.RunToolAsync("JsonFormat"), Is.True);
 				Assert.That(document.Text, Does.Contain("\n"));
 				Assert.That(document.Foldings.AllFoldings, Is.Not.Empty);
 				document.Undo();
@@ -238,8 +238,8 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				var document = window.NewDocument("{invalid}");
-				Assert.That(await window.RunToolAsync("JsonFormat"), Is.False);
+				var document = _window.NewDocument("{invalid}");
+				Assert.That(await _window.RunToolAsync("JsonFormat"), Is.False);
 				Assert.That(document.Text, Is.EqualTo("{invalid}"));
 				Assert.That(Results.Text, Is.Not.Empty);
 			});
@@ -250,12 +250,12 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				window.NewDocument("{\"items\":[1,2]}");
-				Assert.That(await window.RunToolAsync("JsonTree"), Is.True);
-				Assert.That(((TreeView)window.FindName("StructureTree")).Items.Count, Is.EqualTo(1));
-				((TextBox)window.FindName("QueryBox")).Text = "$.items[1]";
-				((ComboBox)window.FindName("QueryMode")).SelectedIndex = 0;
-				Assert.That(await window.RunQueryAsync(), Is.True);
+				_window.NewDocument("{\"items\":[1,2]}");
+				Assert.That(await _window.RunToolAsync("JsonTree"), Is.True);
+				Assert.That(((TreeView)_window.FindName("StructureTree")).Items.Count, Is.EqualTo(1));
+				((TextBox)_window.FindName("QueryBox")).Text = "$.items[1]";
+				((ComboBox)_window.FindName("QueryMode")).SelectedIndex = 0;
+				Assert.That(await _window.RunQueryAsync(), Is.True);
 				Assert.That(Results.Text, Does.EndWith("2"));
 			});
 		}
@@ -265,9 +265,9 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				var document = window.NewDocument("prefix {\"b\":2,\"a\":1} suffix");
+				var document = _window.NewDocument("prefix {\"b\":2,\"a\":1} suffix");
 				document.Select(7, 13);
-				Assert.That(await window.RunToolAsync("JsonSort"), Is.True);
+				Assert.That(await _window.RunToolAsync("JsonSort"), Is.True);
 				Assert.That(document.Text, Does.StartWith("prefix ").And.EndWith(" suffix"));
 				Assert.That(document.Text.IndexOf("\"a\"", StringComparison.Ordinal), Is.LessThan(document.Text.IndexOf("\"b\"", StringComparison.Ordinal)));
 			});
@@ -276,12 +276,12 @@ namespace Software.UnitTests
 		[Test]
 		public void FindStartsAtTheCaretAndReplaceAllIsUndoable()
 		{
-			var document = window.NewDocument("one one");
-			((TextBox)window.FindName("FindBox")).Text = "one";
-			((Button)window.FindName("FindNextButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			var document = _window.NewDocument("one one");
+			((TextBox)_window.FindName("FindBox")).Text = "one";
+			((Button)_window.FindName("FindNextButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			Assert.That(document.SelectionStart, Is.EqualTo(0));
-			((TextBox)window.FindName("ReplaceBox")).Text = "two";
-			((Button)window.FindName("ReplaceAllButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+			((TextBox)_window.FindName("ReplaceBox")).Text = "two";
+			((Button)_window.FindName("ReplaceAllButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 			Assert.That(document.Text, Is.EqualTo("two two"));
 			document.Undo();
 			Assert.That(document.Text, Is.EqualTo("one one"));
@@ -292,16 +292,16 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				string path = Path.Combine(root, "file.xml");
+				string path = Path.Combine(_root, "file.xml");
 				NotepadFile.Save(path, "<root/>\r\n", new UnicodeEncoding(false, true, true));
-				var document = await window.OpenFileAsync(path);
+				var document = await _window.OpenFileAsync(path);
 				Assert.That(document, Is.Not.Null);
 				Assert.That(document!.SyntaxLanguage, Is.EqualTo("XML"));
 				Assert.That(Tabs.Items.Count, Is.EqualTo(1));
-				Assert.That(await window.OpenFileAsync(path), Is.SameAs(document));
+				Assert.That(await _window.OpenFileAsync(path), Is.SameAs(document));
 				Assert.That(Tabs.Items.Count, Is.EqualTo(1));
 				document.Document.Insert(document.Text.Length, "<extra/>");
-				Assert.That(await window.SaveDocumentAsync(document), Is.True);
+				Assert.That(await _window.SaveDocumentAsync(document), Is.True);
 				Assert.That(document.IsDirty, Is.False);
 				var saved = NotepadFile.Read(path);
 				Assert.That(saved.Text, Is.EqualTo(document.Text));
@@ -311,11 +311,11 @@ namespace Software.UnitTests
 
 		private void RunOnDispatcher(Func<Task> action)
 		{
-			Task task = window.Dispatcher.InvokeAsync(action).Task.Unwrap();
+			Task task = _window.Dispatcher.InvokeAsync(action).Task.Unwrap();
 			var frame = new DispatcherFrame();
 			var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
 			timeout.Tick += (_, _) => frame.Continue = false;
-			_ = task.ContinueWith(_ => window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
+			_ = task.ContinueWith(_ => _window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
 			timeout.Start();
 			Dispatcher.PushFrame(frame);
 			timeout.Stop();

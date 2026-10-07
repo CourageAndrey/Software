@@ -9,9 +9,9 @@ namespace Software.UnitTests
 {
 	public class SheetsBookTests
 	{
-		private string root = null!;
-		[SetUp] public void Setup() => root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"SheetsTests-{Guid.NewGuid():N}")).FullName;
-		[TearDown] public void TearDown() => Directory.Delete(root, recursive: true);
+		private string _root = null!;
+		[SetUp] public void Setup() => _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"SheetsTests-{Guid.NewGuid():N}")).FullName;
+		[TearDown] public void TearDown() => Directory.Delete(_root, recursive: true);
 
 		[TestCase(false)]
 		[TestCase(true)]
@@ -21,7 +21,7 @@ namespace Software.UnitTests
 			book.Edit([new(0, 0, "2"), new(1, 0, "3"), new(2, 0, "=SUM(A1:A2)"), new(0, 1, "TRUE"), new(1, 1, "'00123")]);
 			book.Format([(0, 0)], bold: true, numberFormat: "0.00");
 			Assert.That(book.Display(2, 0), Is.EqualTo("5"));
-			string path = Path.Combine(root, "book" + book.Extension);
+			string path = Path.Combine(_root, "book" + book.Extension);
 			book.Save(path);
 			Assert.That(book.IsDirty, Is.False);
 			using var opened = SpreadsheetBook.Open(path);
@@ -59,7 +59,7 @@ namespace Software.UnitTests
 			book.Edit([new(0, 0, "=Sheet1!A1*2")]);
 			Assert.That(book.Display(0, 0), Is.EqualTo("24"));
 			book.RenameSheet("Renamed");
-			string path = Path.Combine(root, "multi.xlsx"); book.Save(path);
+			string path = Path.Combine(_root, "multi.xlsx"); book.Save(path);
 			using var opened = SpreadsheetBook.Open(path);
 			Assert.That(opened.SheetNames, Is.EqualTo(new[] { "Sheet1", "Renamed" }));
 			opened.SelectSheet(1); Assert.That(opened.Display(0, 0), Is.EqualTo("24"));
@@ -70,10 +70,10 @@ namespace Software.UnitTests
 		public void SavesRefuseUnexpectedOverwriteAndWrongFormat()
 		{
 			using var book = SpreadsheetBook.New();
-			string path = Path.Combine(root, "book.xlsx"); book.Save(path);
+			string path = Path.Combine(_root, "book.xlsx"); book.Save(path);
 			Assert.Throws<IOException>(() => book.Save(path));
-			Assert.Throws<NotSupportedException>(() => book.Save(Path.Combine(root, "book.xls")));
-			Assert.That(Directory.GetFiles(root, ".Software.Sheets-*.tmp"), Is.Empty);
+			Assert.Throws<NotSupportedException>(() => book.Save(Path.Combine(_root, "book.xls")));
+			Assert.That(Directory.GetFiles(_root, ".Software.Sheets-*.tmp"), Is.Empty);
 		}
 
 		[Test]
@@ -120,33 +120,33 @@ namespace Software.UnitTests
 	[Apartment(ApartmentState.STA)]
 	public class SheetsUiTests
 	{
-		private MainWindow window = null!;
-		private string root = null!;
-		private DataGrid Grid => (DataGrid)window.FindName("CellGrid");
+		private MainWindow _window = null!;
+		private string _root = null!;
+		private DataGrid Grid => (DataGrid)_window.FindName("CellGrid");
 		[SetUp]
 		public void Setup()
 		{
-			root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"SheetsUiTests-{Guid.NewGuid():N}")).FullName;
-			window = new MainWindow(); window.Show();
+			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"SheetsUiTests-{Guid.NewGuid():N}")).FullName;
+			_window = new MainWindow(); _window.Show();
 		}
 		[TearDown]
 		public void TearDown()
 		{
-			RunOnDispatcher(async () => Assert.That(await window.SaveWorkbookAsync(chosenPath: Path.Combine(root, "cleanup" + window.Book.Extension)), Is.True));
-			window.Close(); Directory.Delete(root, recursive: true);
+			RunOnDispatcher(async () => Assert.That(await _window.SaveWorkbookAsync(chosenPath: Path.Combine(_root, "cleanup" + _window.Book.Extension)), Is.True));
+			_window.Close(); Directory.Delete(_root, recursive: true);
 		}
-		private void Click(string name) => ((Button)window.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+		private void Click(string name) => ((Button)_window.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
 		[Test]
 		public void FormulaBarEditsEvaluateAndCanBeUndone()
 		{
-			((TextBox)window.FindName("FormulaBox")).Text = "=2+3";
+			((TextBox)_window.FindName("FormulaBox")).Text = "=2+3";
 			Click("ApplyFormulaButton");
-			Assert.That(window.Book.Input(0, 0), Is.EqualTo("=2+3"));
-			Assert.That(window.Book.Display(0, 0), Is.EqualTo("5"));
-			Assert.That(window.Title, Does.StartWith("*"));
-			Click("UndoButton"); Assert.That(window.Book.Input(0, 0), Is.Empty);
-			Click("RedoButton"); Assert.That(window.Book.Display(0, 0), Is.EqualTo("5"));
+			Assert.That(_window.Book.Input(0, 0), Is.EqualTo("=2+3"));
+			Assert.That(_window.Book.Display(0, 0), Is.EqualTo("5"));
+			Assert.That(_window.Title, Does.StartWith("*"));
+			Click("UndoButton"); Assert.That(_window.Book.Input(0, 0), Is.Empty);
+			Click("RedoButton"); Assert.That(_window.Book.Display(0, 0), Is.EqualTo("5"));
 		}
 
 		[Test]
@@ -154,7 +154,7 @@ namespace Software.UnitTests
 		{
 			RunOnDispatcher(async () =>
 			{
-				window.SelectCell(0, 0); Grid.Focus();
+				_window.SelectCell(0, 0); Grid.Focus();
 				await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
 				Assert.That(Grid.BeginEdit(), Is.True);
 				Grid.UpdateLayout();
@@ -163,25 +163,25 @@ namespace Software.UnitTests
 				input!.Text = "42";
 				Assert.That(Grid.CommitEdit(DataGridEditingUnit.Cell, true), Is.True);
 				await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-				Assert.That(window.Book.Input(0, 0), Is.EqualTo("42"));
-				Assert.That(window.Book.Display(0, 0), Is.EqualTo("42"));
+				Assert.That(_window.Book.Input(0, 0), Is.EqualTo("42"));
+				Assert.That(_window.Book.Display(0, 0), Is.EqualTo("42"));
 			});
 		}
 
 		[Test]
 		public void RectangularPasteFormattingAndWorksheetSwitchingWork()
 		{
-			window.PasteText("2\t3\n=SUM(A1:B1)\tword");
-			Assert.That(window.Book.Display(1, 0), Is.EqualTo("5"));
-			window.SelectCell(0, 0); Click("BoldButton");
-			Assert.That(window.Book.Appearance(0, 0).Bold, Is.True);
-			window.Book.AddSheet("Other");
-			var tabs = (ListBox)window.FindName("SheetTabs");
-			tabs.ItemsSource = window.Book.SheetNames;
+			_window.PasteText("2\t3\n=SUM(A1:B1)\tword");
+			Assert.That(_window.Book.Display(1, 0), Is.EqualTo("5"));
+			_window.SelectCell(0, 0); Click("BoldButton");
+			Assert.That(_window.Book.Appearance(0, 0).Bold, Is.True);
+			_window.Book.AddSheet("Other");
+			var tabs = (ListBox)_window.FindName("SheetTabs");
+			tabs.ItemsSource = _window.Book.SheetNames;
 			tabs.SelectedIndex = 1;
-			window.PasteText("other");
+			_window.PasteText("other");
 			tabs.SelectedIndex = 0;
-			Assert.That(window.Book.Display(0, 0), Is.EqualTo("2"));
+			Assert.That(_window.Book.Display(0, 0), Is.EqualTo("2"));
 			Assert.That(Grid.Items.Count, Is.GreaterThanOrEqualTo(100));
 		}
 
@@ -195,14 +195,14 @@ namespace Software.UnitTests
 				using (var book = SpreadsheetBook.New(legacy))
 				{
 					book.Edit([new(0, 0, "original")]);
-					source = Path.Combine(root, "source" + book.Extension); book.Save(source);
+					source = Path.Combine(_root, "source" + book.Extension); book.Save(source);
 				}
-				Assert.That(await window.OpenWorkbookAsync(source), Is.True);
-				Assert.That(window.Book.Input(0, 0), Is.EqualTo("original"));
-				((TextBox)window.FindName("FormulaBox")).Text = "changed"; Click("ApplyFormulaButton");
-				string target = Path.Combine(root, "edited" + window.Book.Extension);
-				Assert.That(await window.SaveWorkbookAsync(chosenPath: target), Is.True);
-				Assert.That(window.Book.IsDirty, Is.False);
+				Assert.That(await _window.OpenWorkbookAsync(source), Is.True);
+				Assert.That(_window.Book.Input(0, 0), Is.EqualTo("original"));
+				((TextBox)_window.FindName("FormulaBox")).Text = "changed"; Click("ApplyFormulaButton");
+				string target = Path.Combine(_root, "edited" + _window.Book.Extension);
+				Assert.That(await _window.SaveWorkbookAsync(chosenPath: target), Is.True);
+				Assert.That(_window.Book.IsDirty, Is.False);
 				using var opened = SpreadsheetBook.Open(target);
 				Assert.That(opened.Input(0, 0), Is.EqualTo("changed"));
 			});
@@ -217,10 +217,10 @@ namespace Software.UnitTests
 		}
 		private void RunOnDispatcher(Func<Task> action)
 		{
-			Task task = window.Dispatcher.InvokeAsync(action).Task.Unwrap();
+			Task task = _window.Dispatcher.InvokeAsync(action).Task.Unwrap();
 			var frame = new DispatcherFrame(); var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
 			timeout.Tick += (_, _) => frame.Continue = false;
-			_ = task.ContinueWith(_ => window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
+			_ = task.ContinueWith(_ => _window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
 			timeout.Start(); Dispatcher.PushFrame(frame); timeout.Stop();
 			Assert.That(task.IsCompleted, Is.True, "Sheets UI operation did not finish within 15 seconds.");
 			task.GetAwaiter().GetResult();

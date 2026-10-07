@@ -13,30 +13,30 @@ namespace Software.Notepad
 {
 	public partial class MainWindow : Window
 	{
-		private readonly ObservableCollection<EditorDocument> documents = [];
-		private readonly string[] arguments;
-		private bool updatingSettings;
-		private bool busy;
-		private bool closingPending;
-		private bool closingApproved;
-		private int untitledNumber;
-		private EditorDocument? zeroLengthMatchDocument;
-		private int zeroLengthMatchOffset = -1;
+		private readonly ObservableCollection<EditorDocument> _documents = [];
+		private readonly string[] _arguments;
+		private bool _updatingSettings;
+		private bool _busy;
+		private bool _closingPending;
+		private bool _closingApproved;
+		private int _untitledNumber;
+		private EditorDocument? _zeroLengthMatchDocument;
+		private int _zeroLengthMatchOffset = -1;
 		public EditorDocument? ActiveDocument => TabStrip?.SelectedItem as EditorDocument;
 
 		public MainWindow() : this([]) { }
 
 		public MainWindow(string[] arguments)
 		{
-			this.arguments = arguments.Select(Path.GetFullPath).ToArray();
+			this._arguments = arguments.Select(Path.GetFullPath).ToArray();
 			InitializeComponent();
-			TabStrip.ItemsSource = documents;
+			TabStrip.ItemsSource = _documents;
 			NewDocument();
 		}
 
 		public EditorDocument NewDocument(string text = "")
 		{
-			var document = new EditorDocument($"Untitled {++untitledNumber}", text) { Visibility = Visibility.Collapsed };
+			var document = new EditorDocument($"Untitled {++_untitledNumber}", text) { Visibility = Visibility.Collapsed };
 			AddDocument(document);
 			return document;
 		}
@@ -47,7 +47,7 @@ namespace Software.Notepad
 			document.WordWrap = WrapMenu.IsChecked;
 			document.Options.ShowSpaces = document.Options.ShowTabs = WhitespaceMenu.IsChecked;
 			document.FontSize = FontSizeSlider.Value;
-			documents.Add(document);
+			_documents.Add(document);
 			EditorHost.Children.Add(document);
 			TabStrip.SelectedItem = document;
 			TabStrip.ScrollIntoView(document);
@@ -56,13 +56,13 @@ namespace Software.Notepad
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
-			foreach (string path in arguments)
+			foreach (string path in _arguments)
 				await OpenFileAsync(path);
 		}
 
 		private void New_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (!busy)
+			if (!_busy)
 				NewDocument();
 		}
 
@@ -78,13 +78,13 @@ namespace Software.Notepad
 
 		public async Task<EditorDocument?> OpenFileAsync(string path)
 		{
-			if (busy)
+			if (_busy)
 				return null;
 			SetBusy(true);
 			try
 			{
 				string fullPath = Path.GetFullPath(path);
-				var existing = documents.FirstOrDefault(document => string.Equals(document.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
+				var existing = _documents.FirstOrDefault(document => string.Equals(document.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
 				if (existing != null)
 				{
 					TabStrip.SelectedItem = existing;
@@ -92,7 +92,7 @@ namespace Software.Notepad
 				}
 				var file = await Task.Run(() => NotepadFile.Read(fullPath));
 				var document = new EditorDocument(Path.GetFileName(file.Path), file.Text, file.Encoding, file.Path, file.Hash) { Visibility = Visibility.Collapsed };
-				var empty = documents.Count == 1 && documents[0].FilePath == null && documents[0].Text.Length == 0 && !documents[0].IsDirty ? documents[0] : null;
+				var empty = _documents.Count == 1 && _documents[0].FilePath == null && _documents[0].Text.Length == 0 && !_documents[0].IsDirty ? _documents[0] : null;
 				AddDocument(document);
 				if (empty != null)
 					RemoveDocument(empty);
@@ -109,7 +109,7 @@ namespace Software.Notepad
 
 		private void Tab_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			foreach (var document in documents)
+			foreach (var document in _documents)
 				document.Visibility = document == ActiveDocument ? Visibility.Visible : Visibility.Collapsed;
 			if (StructureTree != null)
 			{
@@ -132,7 +132,7 @@ namespace Software.Notepad
 		{
 			if (ActiveDocument is not EditorDocument document)
 				return;
-			updatingSettings = true;
+			_updatingSettings = true;
 			LanguageBox.SelectedItem = LanguageBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => (string)item.Content == document.SyntaxLanguage);
 			EncodingBox.SelectedIndex = document.FileEncoding.CodePage switch
 			{
@@ -142,7 +142,7 @@ namespace Software.Notepad
 				_ => 0
 			};
 			QueryMode.SelectedIndex = document.SyntaxLanguage == "XML" ? 1 : 0;
-			updatingSettings = false;
+			_updatingSettings = false;
 			DocumentChanged(document);
 		}
 
@@ -160,7 +160,7 @@ namespace Software.Notepad
 
 		private async void SaveAll_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			foreach (var document in documents.ToArray().Where(document => document.IsDirty))
+			foreach (var document in _documents.ToArray().Where(document => document.IsDirty))
 			{
 				if (!await SaveDocumentAsync(document))
 					break;
@@ -169,7 +169,7 @@ namespace Software.Notepad
 
 		public async Task<bool> SaveDocumentAsync(EditorDocument document, bool saveAs = false, string? chosenPath = null)
 		{
-			if (busy)
+			if (_busy)
 				return false;
 			string? path = chosenPath ?? document.FilePath;
 			if (saveAs || path == null)
@@ -183,7 +183,7 @@ namespace Software.Notepad
 			try
 			{
 				string fullPath = Path.GetFullPath(path);
-				var other = documents.FirstOrDefault(item => item != document && string.Equals(item.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
+				var other = _documents.FirstOrDefault(item => item != document && string.Equals(item.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
 				if (other != null)
 					throw new IOException("That file is already open in another tab. Close that tab or choose a different save destination.");
 				if (File.Exists(fullPath) && string.Equals(fullPath, document.FilePath, StringComparison.OrdinalIgnoreCase) && document.DiskHash != null)
@@ -235,48 +235,48 @@ namespace Software.Notepad
 
 		private async Task CloseDocumentAsync(EditorDocument document)
 		{
-			if (busy || !await ConfirmCloseAsync(document))
+			if (_busy || !await ConfirmCloseAsync(document))
 				return;
 			RemoveDocument(document);
-			if (documents.Count == 0)
+			if (_documents.Count == 0)
 				NewDocument();
 		}
 
 		private void RemoveDocument(EditorDocument document)
 		{
-			int index = documents.IndexOf(document);
+			int index = _documents.IndexOf(document);
 			bool selected = document == ActiveDocument;
 			document.StateChanged -= DocumentChanged;
 			EditorHost.Children.Remove(document);
-			documents.Remove(document);
+			_documents.Remove(document);
 			document.Dispose();
-			if (selected && documents.Count > 0)
-				TabStrip.SelectedIndex = Math.Min(index, documents.Count - 1);
+			if (selected && _documents.Count > 0)
+				TabStrip.SelectedIndex = Math.Min(index, _documents.Count - 1);
 		}
 
 		private async void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
-			if (busy || closingPending) { eventArgs.Cancel = true; return; }
-			if (closingApproved || documents.All(document => !document.IsDirty))
+			if (_busy || _closingPending) { eventArgs.Cancel = true; return; }
+			if (_closingApproved || _documents.All(document => !document.IsDirty))
 				return;
 			eventArgs.Cancel = true;
-			closingPending = true;
+			_closingPending = true;
 			try
 			{
-				foreach (var document in documents.ToArray())
+				foreach (var document in _documents.ToArray())
 				{
 					if (!await ConfirmCloseAsync(document))
 						return;
 				}
-				closingApproved = true;
+				_closingApproved = true;
 			}
-			finally { closingPending = false; }
+			finally { _closingPending = false; }
 			_ = Dispatcher.BeginInvoke(Close);
 		}
 
 		private void Window_Closed(object? sender, EventArgs eventArgs)
 		{
-			foreach (var document in documents)
+			foreach (var document in _documents)
 			{
 				document.StateChanged -= DocumentChanged;
 				document.Dispose();
@@ -313,20 +313,20 @@ namespace Software.Notepad
 			try
 			{
 				int start = document.SelectionStart + document.SelectionLength;
-				if (document.SelectionLength == 0 && zeroLengthMatchDocument == document && zeroLengthMatchOffset == start)
+				if (document.SelectionLength == 0 && _zeroLengthMatchDocument == document && _zeroLengthMatchOffset == start)
 					start = start < document.Text.Length ? start + 1 : 0;
 				var match = TextSearch.Find(document.Text, FindBox.Text, start, MatchCase.IsChecked == true, UseRegex.IsChecked == true, WholeWord.IsChecked == true);
 				if (match.Success)
 				{
 					document.Select(match.Index, match.Length);
-					zeroLengthMatchDocument = match.Length == 0 ? document : null;
-					zeroLengthMatchOffset = match.Index;
+					_zeroLengthMatchDocument = match.Length == 0 ? document : null;
+					_zeroLengthMatchOffset = match.Index;
 					document.ScrollToLine(document.Document.GetLineByOffset(match.Index).LineNumber);
 					StatusText.Text = $"Match at character {match.Index + 1}";
 				}
 				else
 				{
-					zeroLengthMatchDocument = null;
+					_zeroLengthMatchDocument = null;
 					StatusText.Text = "No match.";
 				}
 			}
@@ -380,7 +380,7 @@ namespace Software.Notepad
 
 		public async Task<bool> RunToolAsync(string tool)
 		{
-			if (busy || ActiveDocument is not EditorDocument document)
+			if (_busy || ActiveDocument is not EditorDocument document)
 				return false;
 			bool xml = tool.StartsWith("Xml", StringComparison.Ordinal);
 			if (tool.EndsWith("QueryMode", StringComparison.Ordinal))
@@ -462,7 +462,7 @@ namespace Software.Notepad
 
 		public async Task<bool> RunQueryAsync()
 		{
-			if (busy || ActiveDocument is not EditorDocument document)
+			if (_busy || ActiveDocument is not EditorDocument document)
 				return false;
 			string text = document.Text;
 			string expression = QueryBox.Text;
@@ -504,7 +504,7 @@ namespace Software.Notepad
 
 		private void SetBusy(bool value)
 		{
-			busy = value;
+			_busy = value;
 			MainMenu.IsEnabled = Toolbar.IsEnabled = Workspace.IsEnabled = SearchPanel.IsEnabled = SettingsBar.IsEnabled = !value;
 		}
 
@@ -518,7 +518,7 @@ namespace Software.Notepad
 
 		private void Language_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!updatingSettings && ActiveDocument is EditorDocument document && LanguageBox.SelectedItem is ComboBoxItem item)
+			if (!_updatingSettings && ActiveDocument is EditorDocument document && LanguageBox.SelectedItem is ComboBoxItem item)
 			{
 				document.SyntaxLanguage = (string)item.Content;
 				QueryMode.SelectedIndex = document.SyntaxLanguage == "XML" ? 1 : 0;
@@ -527,7 +527,7 @@ namespace Software.Notepad
 
 		private void Encoding_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (updatingSettings || ActiveDocument is not EditorDocument document)
+			if (_updatingSettings || ActiveDocument is not EditorDocument document)
 				return;
 			Encoding? encoding = EncodingBox.SelectedIndex switch
 			{
@@ -540,19 +540,19 @@ namespace Software.Notepad
 
 		private void Wrap_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			foreach (var document in documents)
+			foreach (var document in _documents)
 				document.WordWrap = WrapMenu.IsChecked;
 		}
 
 		private void Whitespace_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			foreach (var document in documents)
+			foreach (var document in _documents)
 				document.Options.ShowSpaces = document.Options.ShowTabs = WhitespaceMenu.IsChecked;
 		}
 
 		private void FontSize_Changed(object sender, RoutedPropertyChangedEventArgs<double> eventArgs)
 		{
-			foreach (var document in documents)
+			foreach (var document in _documents)
 				document.FontSize = eventArgs.NewValue;
 		}
 
@@ -567,7 +567,7 @@ namespace Software.Notepad
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (busy)
+			if (_busy)
 				return;
 			var modifiers = Keyboard.Modifiers;
 			if ((modifiers & ModifierKeys.Control) != 0 && (modifiers & ModifierKeys.Alt) == 0)
@@ -584,7 +584,7 @@ namespace Software.Notepad
 					case Key.F or Key.H: eventArgs.Handled = true; ShowSearch_Click(sender, new RoutedEventArgs()); break;
 					case Key.Tab:
 						eventArgs.Handled = true;
-						TabStrip.SelectedIndex = (TabStrip.SelectedIndex + ((modifiers & ModifierKeys.Shift) != 0 ? -1 : 1) + documents.Count) % documents.Count;
+						TabStrip.SelectedIndex = (TabStrip.SelectedIndex + ((modifiers & ModifierKeys.Shift) != 0 ? -1 : 1) + _documents.Count) % _documents.Count;
 						TabStrip.ScrollIntoView(TabStrip.SelectedItem);
 						ActiveDocument?.Focus();
 						break;
@@ -596,13 +596,13 @@ namespace Software.Notepad
 
 		private void Window_DragOver(object sender, DragEventArgs eventArgs)
 		{
-			eventArgs.Effects = !busy && eventArgs.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+			eventArgs.Effects = !_busy && eventArgs.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
 			eventArgs.Handled = true;
 		}
 
 		private async void Window_Drop(object sender, DragEventArgs eventArgs)
 		{
-			if (!busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] paths)
+			if (!_busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] paths)
 			{
 				foreach (string path in paths)
 					await OpenFileAsync(path);

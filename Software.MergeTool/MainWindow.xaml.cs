@@ -13,24 +13,24 @@ namespace Software.MergeTool
 {
 	public partial class MainWindow : Window
 	{
-		private readonly string[] arguments;
-		private readonly DiffBackgroundRenderer leftRenderer;
-		private readonly DiffBackgroundRenderer rightRenderer;
-		private readonly SourceLineMargin leftMargin;
-		private readonly SourceLineMargin rightMargin;
-		private readonly List<AnchoredDifference> differences = [];
-		private TextFileDocument? leftFile;
-		private MergeComparison? comparison;
-		private string savedText = "";
-		private int savedEncodingIndex;
-		private string? outputPath;
-		private int selectedDifference = -1;
-		private bool busy;
-		private bool loadingResult;
-		private bool synchronizingScroll;
-		private bool selectingDifference;
+		private readonly string[] _arguments;
+		private readonly DiffBackgroundRenderer _leftRenderer;
+		private readonly DiffBackgroundRenderer _rightRenderer;
+		private readonly SourceLineMargin _leftMargin;
+		private readonly SourceLineMargin _rightMargin;
+		private readonly List<AnchoredDifference> _differences = [];
+		private TextFileDocument? _leftFile;
+		private MergeComparison? _comparison;
+		private string _savedText = "";
+		private int _savedEncodingIndex;
+		private string? _outputPath;
+		private int _selectedDifference = -1;
+		private bool _busy;
+		private bool _loadingResult;
+		private bool _synchronizingScroll;
+		private bool _selectingDifference;
 
-		private bool IsDirty => leftFile != null && (ResultEditor.Text != savedText || EncodingBox.SelectedIndex != savedEncodingIndex);
+		private bool IsDirty => _leftFile != null && (ResultEditor.Text != _savedText || EncodingBox.SelectedIndex != _savedEncodingIndex);
 
 		private sealed record AnchoredDifference(DifferenceBlock Block, TextAnchor Start, TextAnchor End)
 		{
@@ -43,16 +43,16 @@ namespace Software.MergeTool
 		{
 			if (arguments.Length is not (0 or 2 or 3))
 				throw new ArgumentException("Use MergeTool.exe <left file> <right file> [output file].");
-			this.arguments = arguments.Select(Path.GetFullPath).ToArray();
+			this._arguments = arguments.Select(Path.GetFullPath).ToArray();
 			InitializeComponent();
-			leftRenderer = new DiffBackgroundRenderer(leftSide: true);
-			rightRenderer = new DiffBackgroundRenderer(leftSide: false);
-			LeftEditor.TextArea.TextView.BackgroundRenderers.Add(leftRenderer);
-			RightEditor.TextArea.TextView.BackgroundRenderers.Add(rightRenderer);
-			leftMargin = new SourceLineMargin(LeftEditor, leftSide: true);
-			rightMargin = new SourceLineMargin(RightEditor, leftSide: false);
-			LeftEditor.TextArea.LeftMargins.Add(leftMargin);
-			RightEditor.TextArea.LeftMargins.Add(rightMargin);
+			_leftRenderer = new DiffBackgroundRenderer(leftSide: true);
+			_rightRenderer = new DiffBackgroundRenderer(leftSide: false);
+			LeftEditor.TextArea.TextView.BackgroundRenderers.Add(_leftRenderer);
+			RightEditor.TextArea.TextView.BackgroundRenderers.Add(_rightRenderer);
+			_leftMargin = new SourceLineMargin(LeftEditor, leftSide: true);
+			_rightMargin = new SourceLineMargin(RightEditor, leftSide: false);
+			LeftEditor.TextArea.LeftMargins.Add(_leftMargin);
+			RightEditor.TextArea.LeftMargins.Add(_rightMargin);
 			LeftEditor.TextArea.TextView.ScrollOffsetChanged += (_, _) => SynchronizeScroll(LeftEditor, RightEditor);
 			RightEditor.TextArea.TextView.ScrollOffsetChanged += (_, _) => SynchronizeScroll(RightEditor, LeftEditor);
 			LeftEditor.TextArea.Caret.PositionChanged += (_, _) => SelectAtRow(LeftEditor.TextArea.Caret.Line - 1);
@@ -61,11 +61,11 @@ namespace Software.MergeTool
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
-			if (arguments.Length >= 2)
+			if (_arguments.Length >= 2)
 			{
-				if (arguments.Length == 3)
-					outputPath = Path.GetFullPath(arguments[2]);
-				await LoadComparisonAsync(arguments[0], arguments[1]);
+				if (_arguments.Length == 3)
+					_outputPath = Path.GetFullPath(_arguments[2]);
+				await LoadComparisonAsync(_arguments[0], _arguments[1]);
 			}
 		}
 
@@ -97,7 +97,7 @@ namespace Software.MergeTool
 
 		public async Task<bool> LoadComparisonAsync(string leftPath, string rightPath)
 		{
-			if (busy || !ConfirmDiscard())
+			if (_busy || !ConfirmDiscard())
 				return false;
 			SetBusy(true);
 			StatusText.Text = "Comparing...";
@@ -109,25 +109,25 @@ namespace Software.MergeTool
 					var right = TextFileDocument.Read(rightPath);
 					return (Left: left, Right: right, Comparison: MergeComparison.Compare(left.Text, right.Text));
 				});
-				leftFile = data.Left;
-				comparison = data.Comparison;
+				_leftFile = data.Left;
+				_comparison = data.Comparison;
 				LeftPathBox.Text = data.Left.Path;
 				RightPathBox.Text = data.Right.Path;
-				LeftEditor.Text = comparison.LeftDisplayText;
-				RightEditor.Text = comparison.RightDisplayText;
-				leftRenderer.Rows = rightRenderer.Rows = comparison.Rows;
-				leftMargin.Rows = rightMargin.Rows = comparison.Rows;
-				leftMargin.InvalidateVisual();
-				rightMargin.InvalidateVisual();
-				loadingResult = true;
+				LeftEditor.Text = _comparison.LeftDisplayText;
+				RightEditor.Text = _comparison.RightDisplayText;
+				_leftRenderer.Rows = _rightRenderer.Rows = _comparison.Rows;
+				_leftMargin.Rows = _rightMargin.Rows = _comparison.Rows;
+				_leftMargin.InvalidateVisual();
+				_rightMargin.InvalidateVisual();
+				_loadingResult = true;
 				ResultEditor.Text = data.Left.Text;
 				ResultEditor.Document.UndoStack.ClearAll();
 				EncodingBox.SelectedIndex = 0;
-				savedEncodingIndex = 0;
-				savedText = data.Left.Text;
-				loadingResult = false;
-				differences.Clear();
-				foreach (var block in comparison.Differences)
+				_savedEncodingIndex = 0;
+				_savedText = data.Left.Text;
+				_loadingResult = false;
+				_differences.Clear();
+				foreach (var block in _comparison.Differences)
 				{
 					var start = ResultEditor.Document.CreateAnchor(block.LeftOffset);
 					start.MovementType = AnchorMovementType.BeforeInsertion;
@@ -135,23 +135,23 @@ namespace Software.MergeTool
 					var end = ResultEditor.Document.CreateAnchor(block.LeftOffset + block.LeftText.Length);
 					end.MovementType = AnchorMovementType.AfterInsertion;
 					end.SurviveDeletion = true;
-					differences.Add(new AnchoredDifference(block, start, end));
+					_differences.Add(new AnchoredDifference(block, start, end));
 				}
 				LeftEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinitionByExtension(Path.GetExtension(data.Left.Path));
 				RightEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinitionByExtension(Path.GetExtension(data.Right.Path));
 				ResultEditor.SyntaxHighlighting = LeftEditor.SyntaxHighlighting;
 				ResultEditor.IsEnabled = SaveButton.IsEnabled = SaveAsButton.IsEnabled = true;
-				selectedDifference = -1;
-				if (differences.Count > 0)
+				_selectedDifference = -1;
+				if (_differences.Count > 0)
 					SelectDifference(0);
 				else
 				{
 					DifferenceLabel.Text = "Files are identical";
-					leftRenderer.SelectedStart = rightRenderer.SelectedStart = -1;
+					_leftRenderer.SelectedStart = _rightRenderer.SelectedStart = -1;
 				}
 				UpdateCommands();
 				UpdateTitle();
-				StatusText.Text = $"{differences.Count} difference(s) | {data.Left.Encoding.WebName} | Result starts from left";
+				StatusText.Text = $"{_differences.Count} difference(s) | {data.Left.Encoding.WebName} | Result starts from left";
 				return true;
 			}
 			catch (Exception exception)
@@ -168,33 +168,33 @@ namespace Software.MergeTool
 
 		private void SynchronizeScroll(TextEditor source, TextEditor target)
 		{
-			if (synchronizingScroll)
+			if (_synchronizingScroll)
 				return;
-			synchronizingScroll = true;
+			_synchronizingScroll = true;
 			target.ScrollToVerticalOffset(source.VerticalOffset);
-			synchronizingScroll = false;
+			_synchronizingScroll = false;
 		}
 
 		private void SelectAtRow(int row)
 		{
-			if (selectingDifference)
+			if (_selectingDifference)
 				return;
-			int index = differences.FindIndex(item => row >= item.Block.StartRow && row < item.Block.StartRow + item.Block.RowCount);
-			if (index >= 0 && index != selectedDifference)
+			int index = _differences.FindIndex(item => row >= item.Block.StartRow && row < item.Block.StartRow + item.Block.RowCount);
+			if (index >= 0 && index != _selectedDifference)
 				SelectDifference(index);
 		}
 
 		private void SelectDifference(int index)
 		{
-			if (index < 0 || index >= differences.Count)
+			if (index < 0 || index >= _differences.Count)
 				return;
-			selectingDifference = true;
+			_selectingDifference = true;
 			try
 			{
-				selectedDifference = index;
-				var selected = differences[index];
-				leftRenderer.SelectedStart = rightRenderer.SelectedStart = selected.Block.StartRow;
-				leftRenderer.SelectedCount = rightRenderer.SelectedCount = selected.Block.RowCount;
+				_selectedDifference = index;
+				var selected = _differences[index];
+				_leftRenderer.SelectedStart = _rightRenderer.SelectedStart = selected.Block.StartRow;
+				_leftRenderer.SelectedCount = _rightRenderer.SelectedCount = selected.Block.RowCount;
 				LeftEditor.ScrollToLine(selected.Block.StartRow + 1);
 				RightEditor.ScrollToLine(selected.Block.StartRow + 1);
 				LeftEditor.TextArea.Caret.Line = selected.Block.StartRow + 1;
@@ -203,30 +203,30 @@ namespace Software.MergeTool
 				ResultEditor.ScrollToLine(ResultEditor.Document.GetLineByOffset(selected.Start.Offset).LineNumber);
 				LeftEditor.TextArea.TextView.InvalidateLayer(ICSharpCode.AvalonEdit.Rendering.KnownLayer.Background);
 				RightEditor.TextArea.TextView.InvalidateLayer(ICSharpCode.AvalonEdit.Rendering.KnownLayer.Background);
-				DifferenceLabel.Text = $"Difference {index + 1} of {differences.Count}";
+				DifferenceLabel.Text = $"Difference {index + 1} of {_differences.Count}";
 				UpdateCommands();
 			}
-			finally { selectingDifference = false; }
+			finally { _selectingDifference = false; }
 		}
 
 		private void UpdateCommands()
 		{
-			PreviousButton.IsEnabled = selectedDifference > 0;
-			NextButton.IsEnabled = selectedDifference >= 0 && selectedDifference < differences.Count - 1;
-			MergeCommands.IsEnabled = selectedDifference >= 0;
+			PreviousButton.IsEnabled = _selectedDifference > 0;
+			NextButton.IsEnabled = _selectedDifference >= 0 && _selectedDifference < _differences.Count - 1;
+			MergeCommands.IsEnabled = _selectedDifference >= 0;
 		}
 
-		private void Previous_Click(object sender, RoutedEventArgs eventArgs) => SelectDifference(selectedDifference - 1);
-		private void Next_Click(object sender, RoutedEventArgs eventArgs) => SelectDifference(selectedDifference + 1);
+		private void Previous_Click(object sender, RoutedEventArgs eventArgs) => SelectDifference(_selectedDifference - 1);
+		private void Next_Click(object sender, RoutedEventArgs eventArgs) => SelectDifference(_selectedDifference + 1);
 		private void UseLeft_Click(object sender, RoutedEventArgs eventArgs) => ApplyChoice("Left");
 		private void UseRight_Click(object sender, RoutedEventArgs eventArgs) => ApplyChoice("Right");
 		private void UseBoth_Click(object sender, RoutedEventArgs eventArgs) => ApplyChoice("Both");
 
 		private void ApplyChoice(string choice)
 		{
-			if (busy || selectedDifference < 0)
+			if (_busy || _selectedDifference < 0)
 				return;
-			var selected = differences[selectedDifference];
+			var selected = _differences[_selectedDifference];
 			int offset = selected.Start.Offset;
 			int length = Math.Max(0, selected.End.Offset - offset);
 			string current = ResultEditor.Document.GetText(offset, length);
@@ -239,7 +239,7 @@ namespace Software.MergeTool
 			ResultEditor.Document.Replace(offset, length, text);
 			selected.ExpectedText = text;
 			ResultEditor.Select(offset, text.Length);
-			StatusText.Text = $"Applied {choice.ToLowerInvariant()} to difference {selectedDifference + 1}.";
+			StatusText.Text = $"Applied {choice.ToLowerInvariant()} to difference {_selectedDifference + 1}.";
 		}
 
 		private void Undo_Click(object sender, RoutedEventArgs eventArgs) => ResultEditor.Undo();
@@ -247,13 +247,13 @@ namespace Software.MergeTool
 
 		private void Result_TextChanged(object? sender, EventArgs eventArgs)
 		{
-			if (!loadingResult)
+			if (!_loadingResult)
 				UpdateTitle();
 		}
 
 		private void Encoding_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!loadingResult && ResultEditor != null)
+			if (!_loadingResult && ResultEditor != null)
 				UpdateTitle();
 		}
 
@@ -262,21 +262,21 @@ namespace Software.MergeTool
 			if (ResultLabel == null)
 				return;
 			Title = (IsDirty ? "* " : "") + "Merge Tool";
-			ResultLabel.Text = (IsDirty ? "* " : "") + "Merge result" + (outputPath == null ? "" : $" - {outputPath}");
-			ResultLabel.ToolTip = outputPath;
+			ResultLabel.Text = (IsDirty ? "* " : "") + "Merge result" + (_outputPath == null ? "" : $" - {_outputPath}");
+			ResultLabel.ToolTip = _outputPath;
 		}
 
-		private async void Save_Click(object sender, RoutedEventArgs eventArgs) => await SaveResultAsync(saveAs: outputPath == null);
+		private async void Save_Click(object sender, RoutedEventArgs eventArgs) => await SaveResultAsync(saveAs: _outputPath == null);
 		private async void SaveAs_Click(object sender, RoutedEventArgs eventArgs) => await SaveResultAsync(saveAs: true);
 
 		private async Task<bool> SaveResultAsync(bool saveAs)
 		{
-			if (busy || leftFile == null)
+			if (_busy || _leftFile == null)
 				return false;
-			string? path = outputPath;
+			string? path = _outputPath;
 			if (saveAs)
 			{
-				var dialog = new SaveFileDialog { Title = "Save merge result", FileName = Path.GetFileName(path ?? leftFile.Path), Filter = "All files|*.*", OverwritePrompt = true };
+				var dialog = new SaveFileDialog { Title = "Save merge result", FileName = Path.GetFileName(path ?? _leftFile.Path), Filter = "All files|*.*", OverwritePrompt = true };
 				if (dialog.ShowDialog(this) != true)
 					return false;
 				path = dialog.FileName;
@@ -293,15 +293,15 @@ namespace Software.MergeTool
 				1 => new UTF8Encoding(false, true),
 				2 => new UTF8Encoding(true, true),
 				3 => new UnicodeEncoding(false, true, true),
-				_ => leftFile.Encoding
+				_ => _leftFile.Encoding
 			};
 			SetBusy(true);
 			try
 			{
 				await Task.Run(() => TextFileDocument.Save(path, text, encoding, overwrite: true));
-				outputPath = path;
-				savedText = text;
-				savedEncodingIndex = encodingIndex;
+				_outputPath = path;
+				_savedText = text;
+				_savedEncodingIndex = encodingIndex;
 				UpdateTitle();
 				StatusText.Text = $"Saved {path}";
 				return true;
@@ -316,7 +316,7 @@ namespace Software.MergeTool
 
 		private void SetBusy(bool value)
 		{
-			busy = value;
+			_busy = value;
 			Toolbar.IsEnabled = Workspace.IsEnabled = EncodingBox.IsEnabled = !value;
 		}
 
@@ -325,7 +325,7 @@ namespace Software.MergeTool
 
 		private void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
-			if (busy)
+			if (_busy)
 			{
 				eventArgs.Cancel = true;
 				StatusText.Text = "Wait for the current operation to finish before closing.";
@@ -336,17 +336,17 @@ namespace Software.MergeTool
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (busy)
+			if (_busy)
 				return;
 			if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && eventArgs.Key == Key.S)
 			{
 				eventArgs.Handled = true;
-				await SaveResultAsync((Keyboard.Modifiers & ModifierKeys.Shift) != 0 || outputPath == null);
+				await SaveResultAsync((Keyboard.Modifiers & ModifierKeys.Shift) != 0 || _outputPath == null);
 			}
 			else if (eventArgs.Key == Key.F7)
 			{
 				eventArgs.Handled = true;
-				SelectDifference(selectedDifference + ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? -1 : 1));
+				SelectDifference(_selectedDifference + ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? -1 : 1));
 			}
 		}
 	}

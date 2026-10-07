@@ -11,10 +11,10 @@ namespace Software.FileCommander
 {
 	public partial class FilePane : UserControl
 	{
-		private int navigationVersion;
-		private bool updatingDrive;
-		private string sortProperty = nameof(FileEntry.Name);
-		private ListSortDirection sortDirection = ListSortDirection.Ascending;
+		private int _navigationVersion;
+		private bool _updatingDrive;
+		private string _sortProperty = nameof(FileEntry.Name);
+		private ListSortDirection _sortDirection = ListSortDirection.Ascending;
 
 		public string CurrentPath { get; private set; } = "";
 		public bool IsLoading { get; private set; }
@@ -42,7 +42,7 @@ namespace Software.FileCommander
 
 		public async Task NavigateAsync(string path)
 		{
-			int version = ++navigationVersion;
+			int version = ++_navigationVersion;
 			string[] selection = SelectedPaths;
 			IsLoading = true;
 			PaneStatus.Text = "Loading...";
@@ -51,7 +51,7 @@ namespace Software.FileCommander
 			{
 				string fullPath = Path.GetFullPath(path, CurrentPath.Length == 0 ? Environment.CurrentDirectory : CurrentPath);
 				var entries = await Task.Run(() => FileOperations.ReadDirectory(fullPath));
-				if (version != navigationVersion)
+				if (version != _navigationVersion)
 					return;
 
 				CurrentPath = fullPath;
@@ -62,25 +62,25 @@ namespace Software.FileCommander
 				ApplySort();
 				foreach (var entry in entries.Where(entry => selection.Contains(entry.FullPath, StringComparer.OrdinalIgnoreCase)))
 					FileList.SelectedItems.Add(entry);
-				updatingDrive = true;
+				_updatingDrive = true;
 				DriveSelector.SelectedItem = Path.GetPathRoot(fullPath);
-				updatingDrive = false;
+				_updatingDrive = false;
 				UpdateStatus();
 			}
 			catch (Exception exception)
 			{
-				if (version == navigationVersion)
+				if (version == _navigationVersion)
 				{
 					PathBox.Text = CurrentPath;
-					updatingDrive = true;
+					_updatingDrive = true;
 					DriveSelector.SelectedItem = Path.GetPathRoot(CurrentPath);
-					updatingDrive = false;
+					_updatingDrive = false;
 					PaneStatus.Text = $"Cannot open folder: {exception.Message}";
 				}
 			}
 			finally
 			{
-				if (version == navigationVersion)
+				if (version == _navigationVersion)
 				{
 					IsLoading = false;
 					NavigationBar.IsEnabled = FileList.IsEnabled = true;
@@ -101,7 +101,7 @@ namespace Software.FileCommander
 
 		private async void Drive_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!updatingDrive && DriveSelector.SelectedItem is string root)
+			if (!_updatingDrive && DriveSelector.SelectedItem is string root)
 				await NavigateAsync(root);
 		}
 
@@ -166,11 +166,11 @@ namespace Software.FileCommander
 				"Name" => nameof(FileEntry.Name),
 				"Size" => nameof(FileEntry.Size),
 				"Modified" => nameof(FileEntry.Modified),
-				_ => sortProperty
+				_ => _sortProperty
 			};
-			sortDirection = property == sortProperty && sortDirection == ListSortDirection.Ascending
+			_sortDirection = property == _sortProperty && _sortDirection == ListSortDirection.Ascending
 				? ListSortDirection.Descending : ListSortDirection.Ascending;
-			sortProperty = property;
+			_sortProperty = property;
 			ApplySort();
 		}
 
@@ -181,7 +181,7 @@ namespace Software.FileCommander
 			{
 				view.SortDescriptions.Clear();
 				view.SortDescriptions.Add(new SortDescription(nameof(FileEntry.IsDirectory), ListSortDirection.Descending));
-				view.SortDescriptions.Add(new SortDescription(sortProperty, sortDirection));
+				view.SortDescriptions.Add(new SortDescription(_sortProperty, _sortDirection));
 			}
 		}
 

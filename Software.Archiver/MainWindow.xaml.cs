@@ -12,38 +12,38 @@ namespace Software.Archiver
 {
 	public partial class MainWindow : Window
 	{
-		private readonly ObservableCollection<string> inputs = [];
-		private readonly ArchiveLaunchRequest startupRequest;
-		private string? currentArchive;
-		private CancellationTokenSource? operationCancellation;
-		private bool startupHandled;
+		private readonly ObservableCollection<string> _inputs = [];
+		private readonly ArchiveLaunchRequest _startupRequest;
+		private string? _currentArchive;
+		private CancellationTokenSource? _operationCancellation;
+		private bool _startupHandled;
 
 		public MainWindow(string[]? arguments = null)
 		{
-			startupRequest = ArchiveLaunchRequest.Parse(arguments ?? []);
+			_startupRequest = ArchiveLaunchRequest.Parse(arguments ?? []);
 			InitializeComponent();
-			InputList.ItemsSource = inputs;
+			InputList.ItemsSource = _inputs;
 		}
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
-			if (startupHandled)
+			if (_startupHandled)
 				return;
-			startupHandled = true;
-			if (startupRequest.Action == "None")
+			_startupHandled = true;
+			if (_startupRequest.Action == "None")
 				return;
-			if (startupRequest.Action == "Add")
+			if (_startupRequest.Action == "Add")
 			{
 				Workspace.SelectedIndex = 1;
-				AddInputs(startupRequest.Paths);
+				AddInputs(_startupRequest.Paths);
 			}
-			else if (startupRequest.Action == "Extract")
+			else if (_startupRequest.Action == "Extract")
 			{
-				if (await OpenArchiveAsync(startupRequest.Paths[0]))
+				if (await OpenArchiveAsync(_startupRequest.Paths[0]))
 					await ExtractAsync(selectedOnly: false);
 			}
-			else if (startupRequest.Action == "Open")
-				await OpenArchiveAsync(startupRequest.Paths[0]);
+			else if (_startupRequest.Action == "Open")
+				await OpenArchiveAsync(_startupRequest.Paths[0]);
 		}
 
 		private async void Open_Click(object sender, RoutedEventArgs eventArgs)
@@ -60,10 +60,10 @@ namespace Software.Archiver
 			bool success = await RunOperationAsync("Opening archive", (token, _) => entries = ArchiveService.ReadArchive(path, password, token));
 			if (!success)
 				return false;
-			currentArchive = Path.GetFullPath(path);
-			ArchivePath.Text = currentArchive;
-			ArchivePath.ToolTip = currentArchive;
-			Title = $"{Path.GetFileName(currentArchive)} - Archiver";
+			_currentArchive = Path.GetFullPath(path);
+			ArchivePath.Text = _currentArchive;
+			ArchivePath.ToolTip = _currentArchive;
+			Title = $"{Path.GetFileName(_currentArchive)} - Archiver";
 			EntryList.ItemsSource = entries;
 			ApplyFilter();
 			Workspace.SelectedIndex = 0;
@@ -74,7 +74,7 @@ namespace Software.Archiver
 
 		private void New_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			inputs.Clear();
+			_inputs.Clear();
 			OutputPath.Text = "";
 			Workspace.SelectedIndex = 1;
 		}
@@ -102,16 +102,16 @@ namespace Software.Archiver
 					string fullPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 					if (!File.Exists(fullPath) && !Directory.Exists(fullPath))
 						throw new FileNotFoundException($"Input not found: {fullPath}");
-					if (!inputs.Contains(fullPath, StringComparer.OrdinalIgnoreCase))
-						inputs.Add(fullPath);
+					if (!_inputs.Contains(fullPath, StringComparer.OrdinalIgnoreCase))
+						_inputs.Add(fullPath);
 				}
-				if (inputs.Count > 0 && string.IsNullOrWhiteSpace(OutputPath.Text))
+				if (_inputs.Count > 0 && string.IsNullOrWhiteSpace(OutputPath.Text))
 				{
-					string first = inputs[0];
+					string first = _inputs[0];
 					string name = Directory.Exists(first) ? Path.GetFileName(first) : Path.GetFileNameWithoutExtension(first);
 					OutputPath.Text = Path.Combine(Path.GetDirectoryName(first) ?? first, (name.Length == 0 ? "Archive" : name) + ".zip");
 				}
-				StatusText.Text = $"{inputs.Count} input(s)";
+				StatusText.Text = $"{_inputs.Count} input(s)";
 			}
 			catch (Exception exception)
 			{
@@ -122,8 +122,8 @@ namespace Software.Archiver
 		private void Remove_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			foreach (string path in InputList.SelectedItems.Cast<string>().ToArray())
-				inputs.Remove(path);
-			StatusText.Text = $"{inputs.Count} input(s)";
+				_inputs.Remove(path);
+			StatusText.Text = $"{_inputs.Count} input(s)";
 		}
 
 		private void OutputBrowse_Click(object sender, RoutedEventArgs eventArgs)
@@ -136,7 +136,7 @@ namespace Software.Archiver
 		private async void Create_Click(object sender, RoutedEventArgs eventArgs)
 		{
 			string output = OutputPath.Text.Trim();
-			string[] sources = inputs.ToArray();
+			string[] sources = _inputs.ToArray();
 			var compression = Enum.Parse<CompressionLevel>((string)((ComboBoxItem)Compression.SelectedItem).Tag);
 			if (await RunOperationAsync("Creating ZIP", (token, progress) => ArchiveService.CreateZip(sources, output, compression, token, progress)))
 				await OpenArchiveAsync(output);
@@ -148,31 +148,31 @@ namespace Software.Archiver
 
 		private async Task ExtractAsync(bool selectedOnly)
 		{
-			if (currentArchive == null || operationCancellation != null)
+			if (_currentArchive == null || _operationCancellation != null)
 				return;
 			string[]? selected = selectedOnly ? EntryList.SelectedItems.Cast<ArchiveItem>().Select(entry => entry.Name).ToArray() : null;
 			if (selected is { Length: 0 })
 				return;
-			var dialog = new OpenFolderDialog { Title = "Choose extraction parent folder", InitialDirectory = Path.GetDirectoryName(currentArchive) };
+			var dialog = new OpenFolderDialog { Title = "Choose extraction parent folder", InitialDirectory = Path.GetDirectoryName(_currentArchive) };
 			if (dialog.ShowDialog(this) != true)
 				return;
-			string name = Path.GetFileNameWithoutExtension(currentArchive);
+			string name = Path.GetFileNameWithoutExtension(_currentArchive);
 			string destination = Path.Combine(dialog.FolderName, name.Length == 0 ? "Extracted" : name);
 			if (MessageBox.Show(this, $"Extract to:\n{destination}\n\nExisting files will not be overwritten.", "Extract archive",
 				MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
 				return;
 			string password = ArchivePassword.Password;
-			string archive = currentArchive;
+			string archive = _currentArchive;
 			if (await RunOperationAsync("Extracting archive", (token, progress) => ArchiveService.Extract(archive, destination, selected, password, token, progress)))
 				StatusText.Text = $"Extracted to {destination}";
 		}
 
 		private async Task<bool> RunOperationAsync(string name, Action<CancellationToken, IProgress<ArchiveProgress>> action)
 		{
-			if (operationCancellation != null)
+			if (_operationCancellation != null)
 				return false;
 			using var cancellation = new CancellationTokenSource();
-			operationCancellation = cancellation;
+			_operationCancellation = cancellation;
 			Toolbar.IsEnabled = Workspace.IsEnabled = ArchiveHeader.IsEnabled = false;
 			CancelButton.IsEnabled = true;
 			OperationProgress.Value = 0;
@@ -180,7 +180,7 @@ namespace Software.Archiver
 			StatusText.Text = name + "...";
 			var progress = new Progress<ArchiveProgress>(update =>
 			{
-				if (operationCancellation != cancellation)
+				if (_operationCancellation != cancellation)
 					return;
 				OperationProgress.IsIndeterminate = false;
 				OperationProgress.Value = update.Percent;
@@ -206,40 +206,40 @@ namespace Software.Archiver
 			}
 			finally
 			{
-				operationCancellation = null;
+				_operationCancellation = null;
 				Toolbar.IsEnabled = Workspace.IsEnabled = ArchiveHeader.IsEnabled = true;
 				CancelButton.IsEnabled = false;
 				OperationProgress.IsIndeterminate = false;
 			}
 		}
 
-		private void Cancel_Click(object sender, RoutedEventArgs eventArgs) => operationCancellation?.Cancel();
+		private void Cancel_Click(object sender, RoutedEventArgs eventArgs) => _operationCancellation?.Cancel();
 
 		private void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
-			if (operationCancellation != null)
+			if (_operationCancellation != null)
 			{
 				eventArgs.Cancel = true;
-				operationCancellation.Cancel();
+				_operationCancellation.Cancel();
 				StatusText.Text = "Canceling the current operation. Close the window once it finishes.";
 			}
 		}
 
 		private void EntrySelection_Changed(object sender, SelectionChangedEventArgs eventArgs)
-			=> ExtractSelectedButton.IsEnabled = currentArchive != null && EntryList.SelectedItems.Count > 0;
+			=> ExtractSelectedButton.IsEnabled = _currentArchive != null && EntryList.SelectedItems.Count > 0;
 
 		private void Filter_Changed(object sender, TextChangedEventArgs eventArgs) => ApplyFilter();
 
 		private void Window_DragOver(object sender, DragEventArgs eventArgs)
 		{
-			eventArgs.Effects = operationCancellation == null && eventArgs.Data.GetDataPresent(DataFormats.FileDrop)
+			eventArgs.Effects = _operationCancellation == null && eventArgs.Data.GetDataPresent(DataFormats.FileDrop)
 				? DragDropEffects.Copy : DragDropEffects.None;
 			eventArgs.Handled = true;
 		}
 
 		private async void Window_Drop(object sender, DragEventArgs eventArgs)
 		{
-			if (operationCancellation != null || eventArgs.Data.GetData(DataFormats.FileDrop) is not string[] paths)
+			if (_operationCancellation != null || eventArgs.Data.GetData(DataFormats.FileDrop) is not string[] paths)
 				return;
 			if (Workspace.SelectedIndex == 0 && paths.Length == 1 && File.Exists(paths[0])
 				&& new[] { ".zip", ".7z", ".rar", ".tar" }.Contains(Path.GetExtension(paths[0]), StringComparer.OrdinalIgnoreCase))
@@ -262,7 +262,7 @@ namespace Software.Archiver
 
 		private void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (operationCancellation != null)
+			if (_operationCancellation != null)
 				return;
 			if (Keyboard.Modifiers == ModifierKeys.Control && eventArgs.Key == Key.O)
 			{

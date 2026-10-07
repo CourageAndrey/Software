@@ -8,13 +8,13 @@ namespace Software.FileCommander
 {
 	public partial class MainWindow : Window
 	{
-		private FilePane activePane;
-		private bool busy;
+		private FilePane _activePane;
+		private bool _busy;
 
 		public MainWindow()
 		{
 			InitializeComponent();
-			activePane = LeftPane;
+			_activePane = LeftPane;
 			LeftPane.Activated += ActivatePane;
 			RightPane.Activated += ActivatePane;
 			ActivatePane(LeftPane);
@@ -28,14 +28,14 @@ namespace Software.FileCommander
 
 		private void ActivatePane(FilePane pane)
 		{
-			activePane = pane;
+			_activePane = pane;
 			LeftPane.IsActive = pane == LeftPane;
 			RightPane.IsActive = pane == RightPane;
 		}
 
 		private async void Refresh_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (!busy)
+			if (!_busy)
 				await RefreshBothAsync();
 		}
 
@@ -43,7 +43,7 @@ namespace Software.FileCommander
 
 		private void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
-			if (busy)
+			if (_busy)
 			{
 				eventArgs.Cancel = true;
 				OperationStatus.Text = "Wait for the current file operation to finish before closing.";
@@ -58,7 +58,7 @@ namespace Software.FileCommander
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (busy || Keyboard.Modifiers != ModifierKeys.None || Keyboard.FocusedElement is TextBox)
+			if (_busy || Keyboard.Modifiers != ModifierKeys.None || Keyboard.FocusedElement is TextBox)
 				return;
 
 			string? command = eventArgs.Key switch
@@ -75,10 +75,10 @@ namespace Software.FileCommander
 				eventArgs.Handled = true;
 				await ExecuteAsync(command);
 			}
-			else if (eventArgs.Key == Key.Tab && activePane.IsFileListFocused)
+			else if (eventArgs.Key == Key.Tab && _activePane.IsFileListFocused)
 			{
 				eventArgs.Handled = true;
-				var other = activePane == LeftPane ? RightPane : LeftPane;
+				var other = _activePane == LeftPane ? RightPane : LeftPane;
 				ActivatePane(other);
 				other.FocusList();
 			}
@@ -86,10 +86,10 @@ namespace Software.FileCommander
 
 		private async Task ExecuteAsync(string command)
 		{
-			if (busy || activePane.IsLoading || string.IsNullOrEmpty(activePane.CurrentPath))
+			if (_busy || _activePane.IsLoading || string.IsNullOrEmpty(_activePane.CurrentPath))
 				return;
 
-			var sourcePane = activePane;
+			var sourcePane = _activePane;
 			var destinationPane = sourcePane == LeftPane ? RightPane : LeftPane;
 			string sourceFolder = sourcePane.CurrentPath;
 			string targetFolder = destinationPane.CurrentPath;
@@ -144,7 +144,7 @@ namespace Software.FileCommander
 					return;
 			}
 
-			busy = true;
+			_busy = true;
 			PaneHost.IsEnabled = CommandBar.IsEnabled = false;
 			BusyProgress.Visibility = Visibility.Visible;
 			OperationStatus.Text = $"{command} in progress...";
@@ -161,7 +161,7 @@ namespace Software.FileCommander
 			finally
 			{
 				await RefreshBothAsync();
-				busy = false;
+				_busy = false;
 				PaneHost.IsEnabled = CommandBar.IsEnabled = true;
 				BusyProgress.Visibility = Visibility.Collapsed;
 				sourcePane.FocusList();

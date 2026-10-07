@@ -86,31 +86,31 @@ namespace Software.UnitTests
 
 	public class MergeFileTests
 	{
-		private string root = null!;
+		private string _root = null!;
 
 		[SetUp]
-		public void Setup() => root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"MergeFileTests-{Guid.NewGuid():N}")).FullName;
+		public void Setup() => _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"MergeFileTests-{Guid.NewGuid():N}")).FullName;
 
 		[TearDown]
-		public void TearDown() => Directory.Delete(root, recursive: true);
+		public void TearDown() => Directory.Delete(_root, recursive: true);
 
 		[TestCase(false)]
 		[TestCase(true)]
 		public void Utf8RoundTripPreservesBomAndLineEndings(bool bom)
 		{
-			string path = Path.Combine(root, "file.txt");
+			string path = Path.Combine(_root, "file.txt");
 			TextFileDocument.Save(path, "first\r\nlast", new UTF8Encoding(bom, true));
 			byte[] original = File.ReadAllBytes(path);
 			var document = TextFileDocument.Read(path);
-			TextFileDocument.Save(Path.Combine(root, "copy.txt"), document.Text, document.Encoding);
-			Assert.That(File.ReadAllBytes(Path.Combine(root, "copy.txt")), Is.EqualTo(original));
+			TextFileDocument.Save(Path.Combine(_root, "copy.txt"), document.Text, document.Encoding);
+			Assert.That(File.ReadAllBytes(Path.Combine(_root, "copy.txt")), Is.EqualTo(original));
 		}
 
 		[TestCase(false)]
 		[TestCase(true)]
 		public void Utf16RoundTripPreservesEncoding(bool bigEndian)
 		{
-			string path = Path.Combine(root, "file.txt");
+			string path = Path.Combine(_root, "file.txt");
 			TextFileDocument.Save(path, "sample\ntext", new UnicodeEncoding(bigEndian, true, true));
 			var document = TextFileDocument.Read(path);
 			Assert.That(document.Text, Is.EqualTo("sample\ntext"));
@@ -120,7 +120,7 @@ namespace Software.UnitTests
 		[Test]
 		public void BinaryAndInvalidUtf8AreRejected()
 		{
-			string path = Path.Combine(root, "binary");
+			string path = Path.Combine(_root, "binary");
 			File.WriteAllBytes(path, [65, 0, 66]);
 			Assert.Throws<InvalidDataException>(() => TextFileDocument.Read(path));
 			File.WriteAllBytes(path, [0xFF, 65]);
@@ -130,28 +130,28 @@ namespace Software.UnitTests
 		[Test]
 		public void SaveRefusesUnrequestedOverwriteAndCleansUpTemporaryFiles()
 		{
-			string path = Path.Combine(root, "file.txt");
+			string path = Path.Combine(_root, "file.txt");
 			File.WriteAllText(path, "original");
 			Assert.Throws<IOException>(() => TextFileDocument.Save(path, "changed", new UTF8Encoding(false)));
 			Assert.That(File.ReadAllText(path), Is.EqualTo("original"));
 			TextFileDocument.Save(path, "changed", new UTF8Encoding(false), overwrite: true);
 			Assert.That(File.ReadAllText(path), Is.EqualTo("changed"));
-			Assert.That(Directory.GetFiles(root, ".Software.MergeTool-*.tmp"), Is.Empty);
+			Assert.That(Directory.GetFiles(_root, ".Software.MergeTool-*.tmp"), Is.Empty);
 		}
 	}
 
 	[Apartment(ApartmentState.STA)]
 	public class MergeToolUiTests
 	{
-		private MainWindow window = null!;
-		private string root = null!;
-		private TextEditor Result => (TextEditor)window.FindName("ResultEditor");
+		private MainWindow _window = null!;
+		private string _root = null!;
+		private TextEditor Result => (TextEditor)_window.FindName("ResultEditor");
 
 		[SetUp]
 		public void Setup()
 		{
-			root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"MergeUiTests-{Guid.NewGuid():N}")).FullName;
-			window = new MainWindow();
+			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"MergeUiTests-{Guid.NewGuid():N}")).FullName;
+			_window = new MainWindow();
 		}
 
 		[TearDown]
@@ -159,21 +159,21 @@ namespace Software.UnitTests
 		{
 			while (Result.CanUndo)
 				Result.Undo();
-			((ComboBox)window.FindName("EncodingBox")).SelectedIndex = 0;
-			window.Close();
-			Directory.Delete(root, recursive: true);
+			((ComboBox)_window.FindName("EncodingBox")).SelectedIndex = 0;
+			_window.Close();
+			Directory.Delete(_root, recursive: true);
 		}
 
-		private void Click(string name) => ((Button)window.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+		private void Click(string name) => ((Button)_window.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
 		private async Task LoadAsync(string left, string right)
 		{
-			string leftPath = Path.Combine(root, "left.txt");
-			string rightPath = Path.Combine(root, "right.txt");
+			string leftPath = Path.Combine(_root, "left.txt");
+			string rightPath = Path.Combine(_root, "right.txt");
 			File.WriteAllText(leftPath, left);
 			File.WriteAllText(rightPath, right);
-			window.Show();
-			Assert.That(await window.LoadComparisonAsync(leftPath, rightPath), Is.True);
+			_window.Show();
+			Assert.That(await _window.LoadComparisonAsync(leftPath, rightPath), Is.True);
 			await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
 		}
 
@@ -183,8 +183,8 @@ namespace Software.UnitTests
 			RunOnDispatcher(async () =>
 			{
 				await LoadAsync("first\nlast", "first\ninserted\nlast");
-				var left = (TextEditor)window.FindName("LeftEditor");
-				var right = (TextEditor)window.FindName("RightEditor");
+				var left = (TextEditor)_window.FindName("LeftEditor");
+				var right = (TextEditor)_window.FindName("RightEditor");
 				Assert.That(left.IsReadOnly && right.IsReadOnly, Is.True);
 				Assert.That(left.Document.LineCount, Is.EqualTo(right.Document.LineCount));
 				Assert.That(left.Text, Is.EqualTo("first\n\nlast"));
@@ -202,10 +202,10 @@ namespace Software.UnitTests
 				await LoadAsync("old", "new");
 				Click("UseRightButton");
 				Assert.That(Result.Text, Is.EqualTo("new"));
-				Assert.That(window.Title, Does.StartWith("*"));
+				Assert.That(_window.Title, Does.StartWith("*"));
 				Result.Undo();
 				Assert.That(Result.Text, Is.EqualTo("old"));
-				Assert.That(window.Title, Does.Not.StartWith("*"));
+				Assert.That(_window.Title, Does.Not.StartWith("*"));
 				Result.Redo();
 				Assert.That(Result.Text, Is.EqualTo("new"));
 				Result.Undo();
@@ -258,11 +258,11 @@ namespace Software.UnitTests
 
 		private void RunOnDispatcher(Func<Task> action)
 		{
-			Task task = window.Dispatcher.InvokeAsync(action).Task.Unwrap();
+			Task task = _window.Dispatcher.InvokeAsync(action).Task.Unwrap();
 			var frame = new DispatcherFrame();
 			var timeout = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
 			timeout.Tick += (_, _) => frame.Continue = false;
-			_ = task.ContinueWith(_ => window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
+			_ = task.ContinueWith(_ => _window.Dispatcher.BeginInvoke(() => frame.Continue = false), TaskScheduler.Default);
 			timeout.Start();
 			Dispatcher.PushFrame(frame);
 			timeout.Stop();

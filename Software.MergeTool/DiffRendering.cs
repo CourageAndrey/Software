@@ -10,11 +10,11 @@ namespace Software.MergeTool
 {
 	internal sealed class DiffBackgroundRenderer(bool leftSide) : IBackgroundRenderer
 	{
-		private static readonly Brush Deleted = new SolidColorBrush(Color.FromRgb(253, 228, 226));
-		private static readonly Brush Inserted = new SolidColorBrush(Color.FromRgb(221, 243, 226));
-		private static readonly Brush Modified = new SolidColorBrush(Color.FromRgb(255, 241, 201));
-		private static readonly Brush Placeholder = new SolidColorBrush(Color.FromRgb(237, 240, 242));
-		private static readonly Brush Selected = new SolidColorBrush(Color.FromRgb(37, 107, 123));
+		private static readonly Brush _deleted = new SolidColorBrush(Color.FromRgb(253, 228, 226));
+		private static readonly Brush _inserted = new SolidColorBrush(Color.FromRgb(221, 243, 226));
+		private static readonly Brush _modified = new SolidColorBrush(Color.FromRgb(255, 241, 201));
+		private static readonly Brush _placeholder = new SolidColorBrush(Color.FromRgb(237, 240, 242));
+		private static readonly Brush _selected = new SolidColorBrush(Color.FromRgb(37, 107, 123));
 
 		public ComparisonRow[] Rows { get; set; } = [];
 		public int SelectedStart { get; set; } = -1;
@@ -33,17 +33,17 @@ namespace Software.MergeTool
 				ChangeType change = leftSide ? Rows[index].LeftChange : Rows[index].RightChange;
 				Brush? background = change switch
 				{
-					ChangeType.Deleted => Deleted,
-					ChangeType.Inserted => Inserted,
-					ChangeType.Modified => Modified,
-					ChangeType.Imaginary => Placeholder,
+					ChangeType.Deleted => _deleted,
+					ChangeType.Inserted => _inserted,
+					ChangeType.Modified => _modified,
+					ChangeType.Imaginary => _placeholder,
 					_ => null
 				};
 				double top = line.VisualTop - textView.VerticalOffset;
 				if (background != null)
 					drawingContext.DrawRectangle(background, null, new Rect(0, top, textView.ActualWidth, line.Height));
 				if (index >= SelectedStart && index < SelectedStart + SelectedCount)
-					drawingContext.DrawRectangle(Selected, null, new Rect(0, top, 3, line.Height));
+					drawingContext.DrawRectangle(_selected, null, new Rect(0, top, 3, line.Height));
 			}
 		}
 	}

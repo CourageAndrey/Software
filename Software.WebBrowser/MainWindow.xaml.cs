@@ -8,12 +8,12 @@ namespace Software.WebBrowser
 {
 	public partial class MainWindow : Window
 	{
-		private readonly ObservableCollection<BrowserTab> tabs = [];
+		private readonly ObservableCollection<BrowserTab> _tabs = [];
 
 		public MainWindow()
 		{
 			InitializeComponent();
-			TabStrip.ItemsSource = tabs;
+			TabStrip.ItemsSource = _tabs;
 			AddTab();
 		}
 
@@ -23,7 +23,7 @@ namespace Software.WebBrowser
 		{
 			var tab = new BrowserTab(navigateHome) { Visibility = Visibility.Collapsed };
 			tab.NewTabRequested += OpenNewWindow;
-			tabs.Add(tab);
+			_tabs.Add(tab);
 			TabHost.Children.Add(tab);
 			TabStrip.SelectedItem = tab;
 			TabStrip.ScrollIntoView(tab);
@@ -39,29 +39,29 @@ namespace Software.WebBrowser
 
 		private void CloseTab(BrowserTab tab)
 		{
-			int index = tabs.IndexOf(tab);
+			int index = _tabs.IndexOf(tab);
 			if (index < 0)
 				return;
 
 			bool wasSelected = TabStrip.SelectedItem == tab;
 			tab.NewTabRequested -= OpenNewWindow;
 			TabHost.Children.Remove(tab);
-			tabs.Remove(tab);
+			_tabs.Remove(tab);
 			tab.Dispose();
 
-			if (tabs.Count == 0)
+			if (_tabs.Count == 0)
 			{
 				Close();
 				return;
 			}
 
 			if (wasSelected)
-				TabStrip.SelectedItem = tabs[Math.Min(index, tabs.Count - 1)];
+				TabStrip.SelectedItem = _tabs[Math.Min(index, _tabs.Count - 1)];
 		}
 
 		private void TabStrip_SelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			foreach (var tab in tabs)
+			foreach (var tab in _tabs)
 				tab.Visibility = TabStrip.SelectedItem == tab ? Visibility.Visible : Visibility.Collapsed;
 
 			if (TabStrip.SelectedItem is BrowserTab selected)
@@ -103,9 +103,9 @@ namespace Software.WebBrowser
 				case Key.W when TabStrip.SelectedItem is BrowserTab selected:
 					CloseTab(selected);
 					return true;
-				case Key.Tab when tabs.Count > 0:
+				case Key.Tab when _tabs.Count > 0:
 					int direction = (modifiers & ModifierKeys.Shift) != 0 ? -1 : 1;
-					TabStrip.SelectedIndex = (TabStrip.SelectedIndex + direction + tabs.Count) % tabs.Count;
+					TabStrip.SelectedIndex = (TabStrip.SelectedIndex + direction + _tabs.Count) % _tabs.Count;
 					TabStrip.ScrollIntoView(TabStrip.SelectedItem);
 					return true;
 				case Key.L when TabStrip.SelectedItem is BrowserTab selected:
@@ -118,7 +118,7 @@ namespace Software.WebBrowser
 
 		private void Window_Closed(object? sender, EventArgs eventArgs)
 		{
-			foreach (var tab in tabs)
+			foreach (var tab in _tabs)
 			{
 				tab.NewTabRequested -= OpenNewWindow;
 				tab.Dispose();

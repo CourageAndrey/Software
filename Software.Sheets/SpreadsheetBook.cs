@@ -16,30 +16,30 @@ namespace Software.Sheets
 	{
 		public const int MaximumRows = 10_000;
 		public const int MaximumColumns = 256;
-		private readonly IWorkbook workbook;
-		private readonly IFormulaEvaluator evaluator;
-		private readonly DataFormatter formatter = new(CultureInfo.InvariantCulture);
-		private readonly Stack<CellChange[]> undo = [];
-		private readonly Stack<CellChange[]> redo = [];
-		private readonly Dictionary<string, ICellStyle> styles = [];
-		private int revision;
-		private int savedRevision;
-		private int nextRevision;
+		private readonly IWorkbook _workbook;
+		private readonly IFormulaEvaluator _evaluator;
+		private readonly DataFormatter _formatter = new(CultureInfo.InvariantCulture);
+		private readonly Stack<CellChange[]> _undo = [];
+		private readonly Stack<CellChange[]> _redo = [];
+		private readonly Dictionary<string, ICellStyle> _styles = [];
+		private int _revision;
+		private int _savedRevision;
+		private int _nextRevision;
 
 		private sealed record CellState(string Input, short Style, byte? Error = null);
 		private sealed record CellChange(int Sheet, int Row, int Column, CellState Before, CellState After, int BeforeRevision, int AfterRevision);
 
-		public string Extension => workbook is HSSFWorkbook ? ".xls" : ".xlsx";
-		public string[] SheetNames => Enumerable.Range(0, workbook.NumberOfSheets).Select(workbook.GetSheetName).ToArray();
+		public string Extension => _workbook is HSSFWorkbook ? ".xls" : ".xlsx";
+		public string[] SheetNames => Enumerable.Range(0, _workbook.NumberOfSheets).Select(_workbook.GetSheetName).ToArray();
 		public int ActiveSheet { get; private set; }
-		public bool IsDirty => revision != savedRevision;
-		public bool CanUndo => undo.Count > 0;
-		public bool CanRedo => redo.Count > 0;
+		public bool IsDirty => _revision != _savedRevision;
+		public bool CanUndo => _undo.Count > 0;
+		public bool CanRedo => _redo.Count > 0;
 
 		private SpreadsheetBook(IWorkbook workbook)
 		{
-			this.workbook = workbook;
-			evaluator = workbook.GetCreationHelper().CreateFormulaEvaluator();
+			this._workbook = workbook;
+			_evaluator = workbook.GetCreationHelper().CreateFormulaEvaluator();
 			ActiveSheet = Math.Clamp(workbook.ActiveSheetIndex, 0, workbook.NumberOfSheets - 1);
 		}
 
@@ -91,20 +91,20 @@ namespace Software.Sheets
 
 		public void SelectSheet(int index)
 		{
-			if (index < 0 || index >= workbook.NumberOfSheets) throw new ArgumentOutOfRangeException(nameof(index));
+			if (index < 0 || index >= _workbook.NumberOfSheets) throw new ArgumentOutOfRangeException(nameof(index));
 			ActiveSheet = index;
-			workbook.SetActiveSheet(index);
+			_workbook.SetActiveSheet(index);
 		}
 
 		public (int Rows, int Columns) Dimensions()
 		{
-			var sheet = workbook.GetSheetAt(ActiveSheet);
+			var sheet = _workbook.GetSheetAt(ActiveSheet);
 			int columns = 0;
 			foreach (IRow row in sheet) columns = Math.Max(columns, row.LastCellNum);
 			return (Math.Min(MaximumRows, Math.Max(100, sheet.LastRowNum + 26)), Math.Min(MaximumColumns, Math.Max(26, columns + 5)));
 		}
 
-		private ICell? Cell(int row, int column) => workbook.GetSheetAt(ActiveSheet).GetRow(row)?.GetCell(column);
+		private ICell? Cell(int row, int column) => _workbook.GetSheetAt(ActiveSheet).GetRow(row)?.GetCell(column);
 
 		public string Input(int row, int column)
 		{
@@ -132,10 +132,10 @@ namespace Software.Sheets
 		{
 			var cell = Cell(row, column);
 			if (cell == null) return "";
-			try { return formatter.FormatCellValue(cell, evaluator); }
+			try { return _formatter.FormatCellValue(cell, _evaluator); }
 			catch (Exception exception) when (exception is NotImplementedException or InvalidOperationException or ArgumentException)
 			{
-				return cell.CellType == CellType.Formula ? "#UNSUPPORTED" : formatter.FormatCellValue(cell);
+				return cell.CellType == CellType.Formula ? "#UNSUPPORTED" : _formatter.FormatCellValue(cell);
 			}
 		}
 
@@ -144,7 +144,7 @@ namespace Software.Sheets
 			var cell = Cell(row, column);
 			if (cell == null) return new(false, false, "#111827", "#FFFFFF", "Left");
 			var style = cell.CellStyle;
-			var font = workbook.GetFontAt(style.FontIndex);
+			var font = _workbook.GetFontAt(style.FontIndex);
 			return new CellAppearance(font.IsBold, font.IsItalic, IndexedColor(font.Color, "#111827"),
 				style.FillPattern == FillPattern.SolidForeground ? IndexedColor(style.FillForegroundColor, "#FFFFFF") : "#FFFFFF", style.Alignment.ToString());
 		}
@@ -158,14 +158,14 @@ namespace Software.Sheets
 				if (edit.Input.Length > 32767) throw new ArgumentException("Cell text must be at most 32,767 characters.");
 				if (edit.Input.StartsWith('='))
 				{
-					IFormulaParsingWorkbook parsing = workbook is XSSFWorkbook xlsx ? XSSFEvaluationWorkbook.Create(xlsx) : HSSFEvaluationWorkbook.Create((HSSFWorkbook)workbook);
+					IFormulaParsingWorkbook parsing = _workbook is XSSFWorkbook xlsx ? XSSFEvaluationWorkbook.Create(xlsx) : HSSFEvaluationWorkbook.Create((HSSFWorkbook)_workbook);
 					FormulaParser.Parse(edit.Input[1..], parsing, FormulaType.Cell, ActiveSheet);
 				}
 			}
 			var changes = planned.GroupBy(edit => (edit.Row, edit.Column)).Select(group => group.Last()).Select(edit =>
 			{
 				var before = Capture(edit.Row, edit.Column);
-				return new CellChange(ActiveSheet, edit.Row, edit.Column, before, new CellState(edit.Input, before.Style), revision, nextRevision + 1);
+				return new CellChange(ActiveSheet, edit.Row, edit.Column, before, new CellState(edit.Input, before.Style), _revision, _nextRevision + 1);
 			}).ToArray();
 			if (changes.Length == 0) return;
 			try { foreach (var change in changes) Apply(change.Row, change.Column, change.After); }
@@ -180,27 +180,27 @@ namespace Software.Sheets
 			{
 				CheckAddress(row, column);
 				var before = Capture(row, column);
-				var oldStyle = workbook.GetCellStyleAt(before.Style);
+				var oldStyle = _workbook.GetCellStyleAt(before.Style);
 				string key = $"{before.Style}:{bold}:{italic}:{numberFormat}:{alignment}";
-				if (!styles.TryGetValue(key, out var style))
+				if (!_styles.TryGetValue(key, out var style))
 				{
-					if (workbook.NumCellStyles >= 3500) throw new InvalidOperationException("The workbook has too many styles to add more formatting safely.");
-					style = workbook.CreateCellStyle();
+					if (_workbook.NumCellStyles >= 3500) throw new InvalidOperationException("The workbook has too many styles to add more formatting safely.");
+					style = _workbook.CreateCellStyle();
 					style.CloneStyleFrom(oldStyle);
 					if (bold != null || italic != null)
 					{
-						var oldFont = workbook.GetFontAt(oldStyle.FontIndex);
-						var font = workbook.CreateFont();
+						var oldFont = _workbook.GetFontAt(oldStyle.FontIndex);
+						var font = _workbook.CreateFont();
 						font.FontName = oldFont.FontName; font.FontHeightInPoints = oldFont.FontHeightInPoints;
 						font.IsBold = bold ?? oldFont.IsBold; font.IsItalic = italic ?? oldFont.IsItalic;
 						font.Color = oldFont.Color; font.Underline = oldFont.Underline; font.IsStrikeout = oldFont.IsStrikeout;
 						style.SetFont(font);
 					}
-					if (numberFormat != null) style.DataFormat = workbook.CreateDataFormat().GetFormat(numberFormat);
+					if (numberFormat != null) style.DataFormat = _workbook.CreateDataFormat().GetFormat(numberFormat);
 					if (alignment != null) style.Alignment = Enum.Parse<HorizontalAlignment>(alignment);
-					styles.Add(key, style);
+					_styles.Add(key, style);
 				}
-				changes.Add(new CellChange(ActiveSheet, row, column, before, before with { Style = style.Index }, revision, nextRevision + 1));
+				changes.Add(new CellChange(ActiveSheet, row, column, before, before with { Style = style.Index }, _revision, _nextRevision + 1));
 			}
 			if (changes.Count == 0) return;
 			foreach (var change in changes) Apply(change.Row, change.Column, change.After);
@@ -216,7 +216,7 @@ namespace Software.Sheets
 
 		private void Apply(int row, int column, CellState value)
 		{
-			var sheet = workbook.GetSheetAt(ActiveSheet);
+			var sheet = _workbook.GetSheetAt(ActiveSheet);
 			var targetRow = sheet.GetRow(row) ?? sheet.CreateRow(row);
 			var cell = targetRow.GetCell(column) ?? targetRow.CreateCell(column);
 			cell.SetCellType(CellType.Blank);
@@ -226,17 +226,17 @@ namespace Software.Sheets
 			else if (bool.TryParse(value.Input, out bool boolean)) cell.SetCellValue(boolean);
 			else if (double.TryParse(value.Input, NumberStyles.Float, CultureInfo.InvariantCulture, out double number) && double.IsFinite(number)) cell.SetCellValue(number);
 			else if (value.Input.Length > 0) cell.SetCellValue(value.Input);
-			cell.CellStyle = workbook.GetCellStyleAt(value.Style);
+			cell.CellStyle = _workbook.GetCellStyleAt(value.Style);
 		}
 
 		private void Commit(CellChange[] changes)
 		{
-			revision = ++nextRevision;
-			undo.Push(changes); redo.Clear(); evaluator.ClearAllCachedResultValues();
+			_revision = ++_nextRevision;
+			_undo.Push(changes); _redo.Clear(); _evaluator.ClearAllCachedResultValues();
 		}
 
-		public void Undo() => Replay(undo, redo, forward: false);
-		public void Redo() => Replay(redo, undo, forward: true);
+		public void Undo() => Replay(_undo, _redo, forward: false);
+		public void Redo() => Replay(_redo, _undo, forward: true);
 
 		private void Replay(Stack<CellChange[]> source, Stack<CellChange[]> destination, bool forward)
 		{
@@ -244,24 +244,24 @@ namespace Software.Sheets
 			var changes = source.Pop();
 			SelectSheet(changes[0].Sheet);
 			foreach (var change in changes) Apply(change.Row, change.Column, forward ? change.After : change.Before);
-			revision = forward ? changes[0].AfterRevision : changes[0].BeforeRevision;
-			destination.Push(changes); evaluator.ClearAllCachedResultValues();
+			_revision = forward ? changes[0].AfterRevision : changes[0].BeforeRevision;
+			destination.Push(changes); _evaluator.ClearAllCachedResultValues();
 		}
 
 		public void AddSheet(string name)
 		{
-			if (workbook.NumberOfSheets >= 32) throw new InvalidOperationException("At most 32 worksheets are supported.");
+			if (_workbook.NumberOfSheets >= 32) throw new InvalidOperationException("At most 32 worksheets are supported.");
 			WorkbookUtil.ValidateSheetName(name);
-			workbook.CreateSheet(name); SelectSheet(workbook.NumberOfSheets - 1); StructureChanged();
+			_workbook.CreateSheet(name); SelectSheet(_workbook.NumberOfSheets - 1); StructureChanged();
 		}
 
-		public void RenameSheet(string name) { WorkbookUtil.ValidateSheetName(name); workbook.SetSheetName(ActiveSheet, name); StructureChanged(); }
+		public void RenameSheet(string name) { WorkbookUtil.ValidateSheetName(name); _workbook.SetSheetName(ActiveSheet, name); StructureChanged(); }
 		public void DeleteSheet()
 		{
-			if (workbook.NumberOfSheets == 1) throw new InvalidOperationException("Keep at least one worksheet.");
-			workbook.RemoveSheetAt(ActiveSheet); SelectSheet(Math.Min(ActiveSheet, workbook.NumberOfSheets - 1)); StructureChanged();
+			if (_workbook.NumberOfSheets == 1) throw new InvalidOperationException("Keep at least one worksheet.");
+			_workbook.RemoveSheetAt(ActiveSheet); SelectSheet(Math.Min(ActiveSheet, _workbook.NumberOfSheets - 1)); StructureChanged();
 		}
-		private void StructureChanged() { revision = ++nextRevision; undo.Clear(); redo.Clear(); evaluator.ClearAllCachedResultValues(); }
+		private void StructureChanged() { _revision = ++_nextRevision; _undo.Clear(); _redo.Clear(); _evaluator.ClearAllCachedResultValues(); }
 
 		public void Save(string path, bool overwrite = false)
 		{
@@ -271,10 +271,10 @@ namespace Software.Sheets
 			string temporary = Path.Combine(Path.GetDirectoryName(output)!, $".Software.Sheets-{Guid.NewGuid():N}.tmp");
 			try
 			{
-				for (int index = 0; index < workbook.NumberOfSheets; index++) workbook.GetSheetAt(index).ForceFormulaRecalculation = true;
-				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) workbook.Write(stream, leaveOpen: true);
+				for (int index = 0; index < _workbook.NumberOfSheets; index++) _workbook.GetSheetAt(index).ForceFormulaRecalculation = true;
+				using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) _workbook.Write(stream, leaveOpen: true);
 				if (overwrite && File.Exists(output)) File.Replace(temporary, output, null); else File.Move(temporary, output);
-				savedRevision = revision;
+				_savedRevision = _revision;
 			}
 			finally { if (File.Exists(temporary)) File.Delete(temporary); }
 		}
@@ -289,6 +289,6 @@ namespace Software.Sheets
 		}
 		private static void CheckAddress(int row, int column) { if (row is < 0 or >= MaximumRows || column is < 0 or >= MaximumColumns) throw new ArgumentOutOfRangeException(nameof(row), "Use rows 1-10,000 and columns A-IV."); }
 		private static string IndexedColor(short color, string fallback) => color switch { 8 => "#000000", 9 => "#FFFFFF", 10 => "#FF0000", 11 => "#008000", 12 => "#0000FF", 13 => "#FFFF00", 22 => "#C0C0C0", 23 => "#808080", _ => fallback };
-		public void Dispose() => workbook.Dispose();
+		public void Dispose() => _workbook.Dispose();
 	}
 }

@@ -15,56 +15,56 @@ namespace Software.TextProcessor
 {
 	public partial class MainWindow : Window
 	{
-		private readonly string[] arguments;
-		private string? currentPath;
-		private string? diskHash;
-		private byte[] savedDocument = [];
-		private bool loading = true;
-		private bool updatingFormat;
-		private bool busy;
-		private bool approvedClose;
-		private bool pendingClose;
-		private int searchOffset;
-		public bool IsDirty => !SerializeDocument(Editor.Document).AsSpan().SequenceEqual(savedDocument);
+		private readonly string[] _arguments;
+		private string? _currentPath;
+		private string? _diskHash;
+		private byte[] _savedDocument = [];
+		private bool _loading = true;
+		private bool _updatingFormat;
+		private bool _busy;
+		private bool _approvedClose;
+		private bool _pendingClose;
+		private int _searchOffset;
+		public bool IsDirty => !SerializeDocument(Editor.Document).AsSpan().SequenceEqual(_savedDocument);
 
 		public MainWindow() : this([]) { }
 
 		public MainWindow(string[] arguments)
 		{
 			if (arguments.Length > 1) throw new ArgumentException("Use TextProcessor.exe [document path].");
-			this.arguments = arguments.Select(Path.GetFullPath).ToArray();
+			this._arguments = arguments.Select(Path.GetFullPath).ToArray();
 			InitializeComponent();
 			Editor.Document = DocumentFiles.NewDocument();
 			Editor.Document.Blocks.Add(new Paragraph());
 			FontBox.ItemsSource = Fonts.SystemFontFamilies.OrderBy(font => font.Source).ToArray();
 			SizeBox.ItemsSource = new double[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72 };
-			savedDocument = SerializeDocument(Editor.Document);
-			loading = false;
+			_savedDocument = SerializeDocument(Editor.Document);
+			_loading = false;
 			UpdateTitle();
 			UpdateFormatting();
 		}
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
-			if (arguments.Length > 0) await OpenDocumentAsync(arguments[0]);
+			if (_arguments.Length > 0) await OpenDocumentAsync(_arguments[0]);
 			Editor.Focus();
 		}
 
-		private void UpdateTitle() => Title = (IsDirty ? "* " : "") + (currentPath == null ? "Untitled" : Path.GetFileName(currentPath)) + " - Text Processor";
+		private void UpdateTitle() => Title = (IsDirty ? "* " : "") + (_currentPath == null ? "Untitled" : Path.GetFileName(_currentPath)) + " - Text Processor";
 
 		private void Editor_TextChanged(object sender, TextChangedEventArgs eventArgs)
 		{
-			if (!loading && Editor != null) { searchOffset = 0; UpdateTitle(); StatusText.Text = IsDirty ? "Modified" : "Ready"; }
+			if (!_loading && Editor != null) { _searchOffset = 0; UpdateTitle(); StatusText.Text = IsDirty ? "Modified" : "Ready"; }
 		}
 
 		private void Editor_SelectionChanged(object sender, RoutedEventArgs eventArgs)
 		{
-			if (!loading && FontBox != null) UpdateFormatting();
+			if (!_loading && FontBox != null) UpdateFormatting();
 		}
 
 		private void UpdateFormatting()
 		{
-			updatingFormat = true;
+			_updatingFormat = true;
 			var family = Editor.Selection.GetPropertyValue(TextElement.FontFamilyProperty);
 			FontBox.SelectedItem = family is FontFamily font ? FontBox.Items.Cast<FontFamily>().FirstOrDefault(item => item.Source == font.Source) : null;
 			var size = Editor.Selection.GetPropertyValue(TextElement.FontSizeProperty);
@@ -74,17 +74,17 @@ namespace Software.TextProcessor
 			var decorations = Editor.Selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
 			UnderlineButton.IsChecked = decorations?.Any(item => item.Location == TextDecorationLocation.Underline) == true;
 			StrikeButton.IsChecked = decorations?.Any(item => item.Location == TextDecorationLocation.Strikethrough) == true;
-			updatingFormat = false;
+			_updatingFormat = false;
 		}
 
 		private void Font_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!loading && !updatingFormat && FontBox.SelectedItem is FontFamily font) Editor.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, font);
+			if (!_loading && !_updatingFormat && FontBox.SelectedItem is FontFamily font) Editor.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, font);
 		}
 
 		private void Size_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!loading && !updatingFormat && SizeBox.SelectedItem is double points) ApplyFontSize(points);
+			if (!_loading && !_updatingFormat && SizeBox.SelectedItem is double points) ApplyFontSize(points);
 		}
 
 		private void Size_KeyDown(object sender, KeyEventArgs eventArgs)
@@ -111,22 +111,22 @@ namespace Software.TextProcessor
 
 		private void Color_Changed(object sender, SelectionChangedEventArgs eventArgs)
 		{
-			if (!loading && !updatingFormat && ColorBox.SelectedItem is ComboBoxItem { Tag: string color })
+			if (!_loading && !_updatingFormat && ColorBox.SelectedItem is ComboBoxItem { Tag: string color })
 				Editor.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)));
 		}
 
 		private async void New_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (busy || !await ConfirmDiscardAsync()) return;
-			loading = true;
+			if (_busy || !await ConfirmDiscardAsync()) return;
+			_loading = true;
 			Editor.Document = DocumentFiles.NewDocument();
 			Editor.Document.Blocks.Add(new Paragraph());
 			Editor.IsUndoEnabled = false;
 			Editor.IsUndoEnabled = true;
-			currentPath = diskHash = null;
-			savedDocument = SerializeDocument(Editor.Document);
+			_currentPath = _diskHash = null;
+			_savedDocument = SerializeDocument(Editor.Document);
 			ImportNote.Visibility = Visibility.Collapsed;
-			loading = false;
+			_loading = false;
 			UpdateTitle();
 			Editor.Focus();
 		}
@@ -139,7 +139,7 @@ namespace Software.TextProcessor
 
 		public async Task<bool> OpenDocumentAsync(string path)
 		{
-			if (busy || !await ConfirmDiscardAsync()) return false;
+			if (_busy || !await ConfirmDiscardAsync()) return false;
 			SetBusy(true);
 			StatusText.Text = "Opening document...";
 			await Dispatcher.Yield(DispatcherPriority.Background);
@@ -147,22 +147,22 @@ namespace Software.TextProcessor
 			{
 				var loaded = DocumentFiles.Open(path);
 				string hash = HashFile(path);
-				loading = true;
+				_loading = true;
 				Editor.Document = loaded.Document;
 				Editor.IsUndoEnabled = false;
 				Editor.IsUndoEnabled = true;
-				currentPath = Path.GetFullPath(path);
-				diskHash = hash;
-				savedDocument = SerializeDocument(Editor.Document);
+				_currentPath = Path.GetFullPath(path);
+				_diskHash = hash;
+				_savedDocument = SerializeDocument(Editor.Document);
 				ImportNote.Text = loaded.ImportNote ?? "";
 				ImportNote.Visibility = loaded.ImportNote == null ? Visibility.Collapsed : Visibility.Visible;
-				loading = false;
+				_loading = false;
 				UpdateTitle(); UpdateFormatting();
-				StatusText.Text = $"Opened {currentPath}";
+				StatusText.Text = $"Opened {_currentPath}";
 				return true;
 			}
 			catch (Exception exception) { ShowError(exception); return false; }
-			finally { loading = false; SetBusy(false); }
+			finally { _loading = false; SetBusy(false); }
 		}
 
 		private async void Save_Click(object sender, RoutedEventArgs eventArgs) => await SaveDocumentAsync();
@@ -170,12 +170,12 @@ namespace Software.TextProcessor
 
 		public async Task<bool> SaveDocumentAsync(bool saveAs = false, string? chosenPath = null)
 		{
-			if (busy) return false;
-			string? path = chosenPath ?? currentPath;
+			if (_busy) return false;
+			string? path = chosenPath ?? _currentPath;
 			if (path == null || saveAs || Path.GetExtension(path).Equals(".doc", StringComparison.OrdinalIgnoreCase))
 			{
 				var dialog = new SaveFileDialog { Title = "Save document", Filter = "Rich text|*.rtf|Word document|*.docx|Plain text|*.txt", DefaultExt = ".rtf", AddExtension = true,
-					FileName = currentPath == null ? "" : Path.GetFileNameWithoutExtension(currentPath), OverwritePrompt = true };
+					FileName = _currentPath == null ? "" : Path.GetFileNameWithoutExtension(_currentPath), OverwritePrompt = true };
 				if (dialog.ShowDialog(this) != true) return false;
 				path = dialog.FileName;
 			}
@@ -185,15 +185,15 @@ namespace Software.TextProcessor
 			await Dispatcher.Yield(DispatcherPriority.Background);
 			try
 			{
-				if (File.Exists(path) && string.Equals(path, currentPath, StringComparison.OrdinalIgnoreCase) && diskHash != null && HashFile(path) != diskHash
+				if (File.Exists(path) && string.Equals(path, _currentPath, StringComparison.OrdinalIgnoreCase) && _diskHash != null && HashFile(path) != _diskHash
 					&& MessageBox.Show(this, "The file changed outside Text Processor. Replace the external changes?", "File changed", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return false;
-				if (chosenPath != null && File.Exists(path) && !string.Equals(path, currentPath, StringComparison.OrdinalIgnoreCase)
+				if (chosenPath != null && File.Exists(path) && !string.Equals(path, _currentPath, StringComparison.OrdinalIgnoreCase)
 					&& MessageBox.Show(this, "Replace the existing destination?", "Save document", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return false;
 				DocumentFiles.Save(path, Editor.Document, overwrite: true);
-				currentPath = Path.GetFullPath(path);
-				diskHash = HashFile(currentPath);
-				savedDocument = SerializeDocument(Editor.Document);
-				UpdateTitle(); StatusText.Text = $"Saved {currentPath}";
+				_currentPath = Path.GetFullPath(path);
+				_diskHash = HashFile(_currentPath);
+				_savedDocument = SerializeDocument(Editor.Document);
+				UpdateTitle(); StatusText.Text = $"Saved {_currentPath}";
 				return true;
 			}
 			catch (Exception exception) { ShowError(exception); return false; }
@@ -209,13 +209,13 @@ namespace Software.TextProcessor
 
 		private async void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
-			if (busy || pendingClose) { eventArgs.Cancel = true; return; }
-			if (approvedClose || !IsDirty) return;
+			if (_busy || _pendingClose) { eventArgs.Cancel = true; return; }
+			if (_approvedClose || !IsDirty) return;
 			eventArgs.Cancel = true;
-			pendingClose = true;
+			_pendingClose = true;
 			bool confirmed = await ConfirmDiscardAsync();
-			pendingClose = false;
-			if (confirmed) { approvedClose = true; _ = Dispatcher.BeginInvoke(Close); }
+			_pendingClose = false;
+			if (confirmed) { _approvedClose = true; _ = Dispatcher.BeginInvoke(Close); }
 		}
 
 		private void Exit_Click(object sender, RoutedEventArgs eventArgs) => Close();
@@ -234,7 +234,7 @@ namespace Software.TextProcessor
 				stream.Position = 0;
 				new TextRange(clone.ContentStart, clone.ContentEnd).Load(stream, DataFormats.XamlPackage);
 				clone.PageWidth = dialog.PrintableAreaWidth; clone.PageHeight = dialog.PrintableAreaHeight;
-				dialog.PrintDocument(((IDocumentPaginatorSource)clone).DocumentPaginator, currentPath == null ? "Text Processor document" : Path.GetFileName(currentPath));
+				dialog.PrintDocument(((IDocumentPaginatorSource)clone).DocumentPaginator, _currentPath == null ? "Text Processor document" : Path.GetFileName(_currentPath));
 			}
 			catch (Exception exception) { ShowError(exception); }
 		}
@@ -293,7 +293,7 @@ namespace Software.TextProcessor
 		{
 			SearchPanel.Visibility = Visibility.Visible;
 			if (!Editor.Selection.IsEmpty) FindBox.Text = Editor.Selection.Text;
-			searchOffset = 0; FindBox.Focus(); FindBox.SelectAll();
+			_searchOffset = 0; FindBox.Focus(); FindBox.SelectAll();
 		}
 		private void HideSearch_Click(object sender, RoutedEventArgs eventArgs) { SearchPanel.Visibility = Visibility.Collapsed; Editor.Focus(); }
 		private void Find_KeyDown(object sender, KeyEventArgs eventArgs) { if (eventArgs.Key == Key.Enter) { eventArgs.Handled = true; FindNext_Click(sender, new RoutedEventArgs()); } }
@@ -345,10 +345,10 @@ namespace Software.TextProcessor
 		{
 			var matches = FindMatches();
 			if (matches.Count == 0) { StatusText.Text = "No matches."; return; }
-			var match = matches[searchOffset % matches.Count];
+			var match = matches[_searchOffset % matches.Count];
 			Editor.Selection.Select(match.Start, match.End);
 			match.Start.Paragraph?.BringIntoView();
-			searchOffset++; StatusText.Text = $"Match {(searchOffset - 1) % matches.Count + 1} of {matches.Count}";
+			_searchOffset++; StatusText.Text = $"Match {(_searchOffset - 1) % matches.Count + 1} of {matches.Count}";
 		}
 		private void Replace_Click(object sender, RoutedEventArgs eventArgs)
 		{
@@ -369,14 +369,14 @@ namespace Software.TextProcessor
 			if (EditorScale == null) return;
 			EditorScale.ScaleX = EditorScale.ScaleY = eventArgs.NewValue / 100; ZoomLabel.Text = $"{eventArgs.NewValue:0}%";
 		}
-		private void SetBusy(bool value) { busy = value; MainMenu.IsEnabled = FileToolbar.IsEnabled = FormatToolbar.IsEnabled = Editor.IsEnabled = SearchPanel.IsEnabled = !value; }
+		private void SetBusy(bool value) { _busy = value; MainMenu.IsEnabled = FileToolbar.IsEnabled = FormatToolbar.IsEnabled = Editor.IsEnabled = SearchPanel.IsEnabled = !value; }
 		private void ShowError(Exception exception) { StatusText.Text = "Operation failed."; MessageBox.Show(this, exception.Message, "Text Processor", MessageBoxButton.OK, MessageBoxImage.Error); }
 		private static string HashFile(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)); }
 		private static byte[] SerializeDocument(FlowDocument document) { using var stream = new MemoryStream(); new TextRange(document.ContentStart, document.ContentEnd).Save(stream, DataFormats.Rtf); return stream.ToArray(); }
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (busy) return;
+			if (_busy) return;
 			if ((Keyboard.Modifiers & ModifierKeys.Control) != 0)
 			{
 				switch (eventArgs.Key)
@@ -391,7 +391,7 @@ namespace Software.TextProcessor
 			else if (eventArgs.Key == Key.F3) { eventArgs.Handled = true; FindNext_Click(sender, new RoutedEventArgs()); }
 			else if (eventArgs.Key == Key.Escape && SearchPanel.Visibility == Visibility.Visible) { eventArgs.Handled = true; HideSearch_Click(sender, new RoutedEventArgs()); }
 		}
-		private void Window_DragOver(object sender, DragEventArgs eventArgs) { eventArgs.Effects = !busy && eventArgs.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None; eventArgs.Handled = true; }
-		private async void Window_Drop(object sender, DragEventArgs eventArgs) { if (!busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths) await OpenDocumentAsync(paths[0]); }
+		private void Window_DragOver(object sender, DragEventArgs eventArgs) { eventArgs.Effects = !_busy && eventArgs.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None; eventArgs.Handled = true; }
+		private async void Window_Drop(object sender, DragEventArgs eventArgs) { if (!_busy && eventArgs.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths) await OpenDocumentAsync(paths[0]); }
 	}
 }

@@ -10,24 +10,24 @@ namespace Software.UnitTests
 {
 	public class ArchiveServiceTests
 	{
-		private string root = null!;
-		private string archivePath = null!;
-		private string destination = null!;
+		private string _root = null!;
+		private string _archivePath = null!;
+		private string _destination = null!;
 
 		[SetUp]
 		public void Setup()
 		{
-			root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"ArchiverTests-{Guid.NewGuid():N}")).FullName;
-			archivePath = Path.Combine(root, "test.zip");
-			destination = Path.Combine(root, "extracted");
+			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"ArchiverTests-{Guid.NewGuid():N}")).FullName;
+			_archivePath = Path.Combine(_root, "test.zip");
+			_destination = Path.Combine(_root, "extracted");
 		}
 
 		[TearDown]
-		public void TearDown() => Directory.Delete(root, recursive: true);
+		public void TearDown() => Directory.Delete(_root, recursive: true);
 
 		private void MakeZip(params (string Name, string Content)[] entries)
 		{
-			using var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create);
+			using var archive = ZipFile.Open(_archivePath, ZipArchiveMode.Create);
 			foreach (var (name, content) in entries)
 			{
 				var entry = archive.CreateEntry(name);
@@ -39,34 +39,34 @@ namespace Software.UnitTests
 		[Test]
 		public void ZipRoundTripPreservesNestedFilesAndEmptyFolders()
 		{
-			string source = Directory.CreateDirectory(Path.Combine(root, "source")).FullName;
+			string source = Directory.CreateDirectory(Path.Combine(_root, "source")).FullName;
 			Directory.CreateDirectory(Path.Combine(source, "empty"));
 			Directory.CreateDirectory(Path.Combine(source, "nested"));
 			File.WriteAllText(Path.Combine(source, "nested", "hello.txt"), "hello world");
-			ArchiveService.CreateZip([source], archivePath);
-			var entries = ArchiveService.ReadArchive(archivePath);
+			ArchiveService.CreateZip([source], _archivePath);
+			var entries = ArchiveService.ReadArchive(_archivePath);
 			Assert.That(entries.Select(entry => entry.Name), Does.Contain("source/nested/hello.txt"));
-			ArchiveService.Extract(archivePath, destination);
-			Assert.That(File.ReadAllText(Path.Combine(destination, "source", "nested", "hello.txt")), Is.EqualTo("hello world"));
-			Assert.That(Directory.Exists(Path.Combine(destination, "source", "empty")), Is.True);
+			ArchiveService.Extract(_archivePath, _destination);
+			Assert.That(File.ReadAllText(Path.Combine(_destination, "source", "nested", "hello.txt")), Is.EqualTo("hello world"));
+			Assert.That(Directory.Exists(Path.Combine(_destination, "source", "empty")), Is.True);
 		}
 
 		[Test]
 		public void ExtractingSelectedFolderIncludesDescendantsOnly()
 		{
 			MakeZip(("folder/", ""), ("folder/child.txt", "child"), ("other.txt", "other"));
-			ArchiveService.Extract(archivePath, destination, ["folder/"]);
-			Assert.That(File.ReadAllText(Path.Combine(destination, "folder", "child.txt")), Is.EqualTo("child"));
-			Assert.That(File.Exists(Path.Combine(destination, "other.txt")), Is.False);
+			ArchiveService.Extract(_archivePath, _destination, ["folder/"]);
+			Assert.That(File.ReadAllText(Path.Combine(_destination, "folder", "child.txt")), Is.EqualTo("child"));
+			Assert.That(File.Exists(Path.Combine(_destination, "other.txt")), Is.False);
 		}
 
 		[Test]
 		public void ExtractingSelectedFileDoesNotExtractOtherEntries()
 		{
 			MakeZip(("first.txt", "first"), ("second.txt", "second"));
-			ArchiveService.Extract(archivePath, destination, ["second.txt"]);
-			Assert.That(File.Exists(Path.Combine(destination, "first.txt")), Is.False);
-			Assert.That(File.ReadAllText(Path.Combine(destination, "second.txt")), Is.EqualTo("second"));
+			ArchiveService.Extract(_archivePath, _destination, ["second.txt"]);
+			Assert.That(File.Exists(Path.Combine(_destination, "first.txt")), Is.False);
+			Assert.That(File.ReadAllText(Path.Combine(_destination, "second.txt")), Is.EqualTo("second"));
 		}
 
 		[TestCase("../outside.txt")]
@@ -80,82 +80,82 @@ namespace Software.UnitTests
 		public void UnsafeArchivePathsAreRejectedBeforeCreatingAnyOutput(string name)
 		{
 			MakeZip(("safe.txt", "safe"), (name, "unsafe"));
-			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(archivePath, destination));
-			Assert.That(Directory.Exists(destination), Is.False);
-			Assert.That(File.Exists(Path.Combine(root, "outside.txt")), Is.False);
+			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(_archivePath, _destination));
+			Assert.That(Directory.Exists(_destination), Is.False);
+			Assert.That(File.Exists(Path.Combine(_root, "outside.txt")), Is.False);
 		}
 
 		[Test]
 		public void ExtractionDoesNotOverwriteFilesOrPartiallyProcessKnownConflicts()
 		{
 			MakeZip(("first.txt", "first"), ("existing.txt", "new"));
-			Directory.CreateDirectory(destination);
-			File.WriteAllText(Path.Combine(destination, "existing.txt"), "original");
-			Assert.Throws<IOException>(() => ArchiveService.Extract(archivePath, destination));
-			Assert.That(File.ReadAllText(Path.Combine(destination, "existing.txt")), Is.EqualTo("original"));
-			Assert.That(File.Exists(Path.Combine(destination, "first.txt")), Is.False);
+			Directory.CreateDirectory(_destination);
+			File.WriteAllText(Path.Combine(_destination, "existing.txt"), "original");
+			Assert.Throws<IOException>(() => ArchiveService.Extract(_archivePath, _destination));
+			Assert.That(File.ReadAllText(Path.Combine(_destination, "existing.txt")), Is.EqualTo("original"));
+			Assert.That(File.Exists(Path.Combine(_destination, "first.txt")), Is.False);
 		}
 
 		[Test]
 		public void CaseCollidingEntriesAndFileFolderConflictsAreRejected()
 		{
 			MakeZip(("FILE.txt", "upper"), ("file.txt", "lower"));
-			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(archivePath, destination));
-			File.Delete(archivePath);
+			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(_archivePath, _destination));
+			File.Delete(_archivePath);
 			MakeZip(("folder", "file"), ("folder/child.txt", "child"));
-			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(archivePath, destination));
-			Assert.That(Directory.Exists(destination), Is.False);
+			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(_archivePath, _destination));
+			Assert.That(Directory.Exists(_destination), Is.False);
 		}
 
 		[Test]
 		public void ExtractionSizeLimitRejectsOversizedArchivesBeforeWriting()
 		{
 			MakeZip(("too-large.txt", "1234567890"));
-			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(archivePath, destination, maximumBytes: 5));
-			Assert.That(Directory.Exists(destination), Is.False);
+			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(_archivePath, _destination, maximumBytes: 5));
+			Assert.That(Directory.Exists(_destination), Is.False);
 		}
 
 		[Test]
 		public void ArchiveCreationRefusesExistingOutputAndSelfInclusion()
 		{
-			string input = Path.Combine(root, "input.txt");
+			string input = Path.Combine(_root, "input.txt");
 			File.WriteAllText(input, "data");
-			ArchiveService.CreateZip([input], archivePath);
-			byte[] original = File.ReadAllBytes(archivePath);
-			Assert.Throws<IOException>(() => ArchiveService.CreateZip([input], archivePath));
-			Assert.That(File.ReadAllBytes(archivePath), Is.EqualTo(original));
-			Assert.Throws<IOException>(() => ArchiveService.CreateZip([root], Path.Combine(root, "inside.zip")));
-			Assert.That(File.Exists(Path.Combine(root, "inside.zip")), Is.False);
+			ArchiveService.CreateZip([input], _archivePath);
+			byte[] original = File.ReadAllBytes(_archivePath);
+			Assert.Throws<IOException>(() => ArchiveService.CreateZip([input], _archivePath));
+			Assert.That(File.ReadAllBytes(_archivePath), Is.EqualTo(original));
+			Assert.Throws<IOException>(() => ArchiveService.CreateZip([_root], Path.Combine(_root, "inside.zip")));
+			Assert.That(File.Exists(Path.Combine(_root, "inside.zip")), Is.False);
 		}
 
 		[Test]
 		public void DuplicateInputNamesAreRejectedWithoutCreatingAnArchive()
 		{
-			string left = Directory.CreateDirectory(Path.Combine(root, "left")).FullName;
-			string right = Directory.CreateDirectory(Path.Combine(root, "right")).FullName;
+			string left = Directory.CreateDirectory(Path.Combine(_root, "left")).FullName;
+			string right = Directory.CreateDirectory(Path.Combine(_root, "right")).FullName;
 			File.WriteAllText(Path.Combine(left, "same.txt"), "left");
 			File.WriteAllText(Path.Combine(right, "same.txt"), "right");
-			Assert.Throws<IOException>(() => ArchiveService.CreateZip([Path.Combine(left, "same.txt"), Path.Combine(right, "same.txt")], archivePath));
-			Assert.That(File.Exists(archivePath), Is.False);
+			Assert.Throws<IOException>(() => ArchiveService.CreateZip([Path.Combine(left, "same.txt"), Path.Combine(right, "same.txt")], _archivePath));
+			Assert.That(File.Exists(_archivePath), Is.False);
 		}
 
 		[Test]
 		public void CancellationDuringCreationLeavesNoArchiveOrTemporaryFile()
 		{
-			string input = Path.Combine(root, "input.txt");
+			string input = Path.Combine(_root, "input.txt");
 			File.WriteAllText(input, "data");
 			using var cancellation = new CancellationTokenSource();
 			var progress = new CallbackProgress(_ => cancellation.Cancel());
-			Assert.Throws<OperationCanceledException>(() => ArchiveService.CreateZip([input], archivePath,
+			Assert.Throws<OperationCanceledException>(() => ArchiveService.CreateZip([input], _archivePath,
 				cancellationToken: cancellation.Token, progress: progress));
-			Assert.That(File.Exists(archivePath), Is.False);
-			Assert.That(Directory.GetFiles(root, ".Software.Archiver-*.tmp"), Is.Empty);
+			Assert.That(File.Exists(_archivePath), Is.False);
+			Assert.That(Directory.GetFiles(_root, ".Software.Archiver-*.tmp"), Is.Empty);
 		}
 
 		[Test]
 		public void TarArchiveIsListedAndExtractedWithRelativeEntryPaths()
 		{
-			string tarPath = Path.Combine(root, "sample.tar");
+			string tarPath = Path.Combine(_root, "sample.tar");
 			using (var output = File.Create(tarPath))
 			using (var writer = new TarWriter(output))
 			{
@@ -164,27 +164,27 @@ namespace Software.UnitTests
 				writer.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, "./file.txt") { DataStream = content });
 			}
 			Assert.That(ArchiveService.ReadArchive(tarPath).Any(entry => entry.Name.EndsWith("file.txt")), Is.True);
-			ArchiveService.Extract(tarPath, destination);
-			Assert.That(File.ReadAllText(Path.Combine(destination, "file.txt")), Is.EqualTo("tar content"));
+			ArchiveService.Extract(tarPath, _destination);
+			Assert.That(File.ReadAllText(Path.Combine(_destination, "file.txt")), Is.EqualTo("tar content"));
 		}
 
 		[Test]
 		public void TarSymbolicLinksAreRejected()
 		{
-			string tarPath = Path.Combine(root, "links.tar");
+			string tarPath = Path.Combine(_root, "links.tar");
 			using (var output = File.Create(tarPath))
 			using (var writer = new TarWriter(output))
 				writer.WriteEntry(new PaxTarEntry(TarEntryType.SymbolicLink, "link") { LinkName = "../outside" });
-			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(tarPath, destination));
-			Assert.That(Directory.Exists(destination), Is.False);
+			Assert.Throws<InvalidDataException>(() => ArchiveService.Extract(tarPath, _destination));
+			Assert.That(Directory.Exists(_destination), Is.False);
 		}
 
 		[Test]
 		public void MalformedArchiveFailsWithoutCreatingOutput()
 		{
-			File.WriteAllText(archivePath, "not an archive");
-			Assert.Catch(() => ArchiveService.Extract(archivePath, destination));
-			Assert.That(Directory.Exists(destination), Is.False);
+			File.WriteAllText(_archivePath, "not an archive");
+			Assert.Catch(() => ArchiveService.Extract(_archivePath, _destination));
+			Assert.That(Directory.Exists(_destination), Is.False);
 		}
 
 		private sealed class CallbackProgress(Action<ArchiveProgress> callback) : IProgress<ArchiveProgress>
