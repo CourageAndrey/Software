@@ -54,9 +54,10 @@ namespace Software.WebBrowser
 			_tabs.Remove(tab);
 			tab.Dispose();
 
+			// Closing the last tab replaces it with a fresh one instead of closing the window.
 			if (_tabs.Count == 0)
 			{
-				Close();
+				AddTab();
 				return;
 			}
 

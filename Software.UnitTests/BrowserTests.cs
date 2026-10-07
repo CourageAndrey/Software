@@ -109,12 +109,16 @@ namespace Software.UnitTests
 		}
 
 		[Test]
-		public void ClosingTheLastTabClosesTheWindow()
+		public void ClosingTheLastTabOpensANewTab()
 		{
 			bool closed = false;
 			_window.Closed += (_, _) => closed = true;
-			CloseTab(Tabs[0]);
-			Assert.That(closed, Is.True);
+			var last = Tabs[0];
+			CloseTab(last);
+			Assert.That(closed, Is.False);
+			Assert.That(Tabs, Has.Length.EqualTo(1));
+			Assert.That(Tabs[0], Is.Not.SameAs(last));
+			Assert.That(TabStrip.SelectedItem, Is.SameAs(Tabs[0]));
 		}
 
 		[Test]
