@@ -23,6 +23,7 @@
     <ProjectReference Include="..\Software.FileCommander\Software.FileCommander.csproj" />
     <ProjectReference Include="..\Software.MergeTool\Software.MergeTool.csproj" />
     <ProjectReference Include="..\Software.Notepad\Software.Notepad.csproj" />
+    <ProjectReference Include="..\Software.Sheets\Software.Sheets.csproj" />
     <ProjectReference Include="..\Software.TextProcessor\Software.TextProcessor.csproj" />
     <ProjectReference Include="..\Software.WebBrowser\Software.WebBrowser.csproj" />
   </ItemGroup>
