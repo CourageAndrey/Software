@@ -8,7 +8,7 @@ namespace Software.WebBrowser
 {
     public partial class BrowserTab : UserControl, IDisposable
     {
-        private const string HomeAddress = "https://www.bing.com/";
+        private const string HomeAddress = "about:blank";
         private static Task<CoreWebView2Environment>? environmentTask;
         private readonly bool navigateHome;
         private Task? initializationTask;
