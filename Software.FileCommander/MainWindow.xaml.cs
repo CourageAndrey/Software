@@ -33,16 +33,6 @@ namespace Software.FileCommander
 			RightPane.IsActive = pane == RightPane;
 		}
 
-		private async void Refresh_Click(object sender, RoutedEventArgs eventArgs)
-		{
-			if (!_busy)
-			{
-				await RefreshBothAsync();
-			}
-		}
-
-		private Task RefreshBothAsync() => Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
-
 		private void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
 			if (_busy)
@@ -183,7 +173,7 @@ namespace Software.FileCommander
 			}
 			finally
 			{
-				await RefreshBothAsync();
+				await Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
 				_busy = false;
 				PaneHost.IsEnabled = CommandBar.IsEnabled = true;
 				BusyProgress.Visibility = Visibility.Collapsed;
