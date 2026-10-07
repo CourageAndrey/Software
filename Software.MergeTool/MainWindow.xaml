@@ -1,101 +1,101 @@
 ﻿<Window x:Class="Software.MergeTool.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:Software.MergeTool"
-        xmlns:editor="http://icsharpcode.net/sharpdevelop/avalonedit"
-        Title="Merge Tool" Height="900" Width="1320" MinHeight="600" MinWidth="980"
-        FontFamily="Segoe UI" Background="#F3F4F6" Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
-    <Window.Resources>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="3,0" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D1D5DB" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
-            <Setter Property="Width" Value="34" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="0" />
-        </Style>
-        <Style TargetType="editor:TextEditor">
-            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
-            <Setter Property="WordWrap" Value="False" />
-            <Setter Property="BorderBrush" Value="#D1D5DB" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-    </Window.Resources>
-    <Grid Margin="10">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-        <DockPanel x:Name="Toolbar" Margin="0,0,0,10">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button x:Name="SaveButton" Click="Save_Click" IsEnabled="False"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE74E;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Save result" /></StackPanel></Button>
-                <Button x:Name="SaveAsButton" Click="SaveAs_Click" IsEnabled="False" ToolTip="Save result as" AutomationProperties.Name="Save result as" Style="{StaticResource IconButton}" Content="&#xE792;" />
-            </StackPanel>
-            <TextBlock Text="Merge Tool" FontSize="18" FontWeight="SemiBold" Margin="0,0,20,0" VerticalAlignment="Center" Foreground="#111827" />
-            <StackPanel Orientation="Horizontal">
-                <Button Click="Compare_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE9D9;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Compare" /></StackPanel></Button>
-                <Button Click="Swap_Click" Style="{StaticResource IconButton}" Content="&#xE8AB;" ToolTip="Swap files and compare" AutomationProperties.Name="Swap files" />
-                <Button x:Name="PreviousButton" Click="Previous_Click" Style="{StaticResource IconButton}" Content="&#xE70E;" IsEnabled="False" ToolTip="Previous difference" AutomationProperties.Name="Previous difference" />
-                <Button x:Name="NextButton" Click="Next_Click" Style="{StaticResource IconButton}" Content="&#xE70D;" IsEnabled="False" ToolTip="Next difference" AutomationProperties.Name="Next difference" />
-                <TextBlock x:Name="DifferenceLabel" Text="No comparison" VerticalAlignment="Center" Margin="10,0,0,0" />
-            </StackPanel>
-        </DockPanel>
-        <Grid x:Name="Workspace" Grid.Row="1">
-            <Grid.RowDefinitions><RowDefinition Height="3*" MinHeight="180" /><RowDefinition Height="7" /><RowDefinition Height="2*" MinHeight="160" /></Grid.RowDefinitions>
-            <Grid x:Name="SourceArea">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="340" /><ColumnDefinition Width="7" /><ColumnDefinition Width="*" MinWidth="340" /></Grid.ColumnDefinitions>
-                <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,8">
-                        <Button DockPanel.Dock="Right" Click="BrowseLeft_Click" Style="{StaticResource IconButton}" Content="&#xE8B7;" ToolTip="Choose left file" AutomationProperties.Name="Choose left file" />
-                        <TextBlock Text="Left" DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBox x:Name="LeftPathBox" Padding="5" VerticalContentAlignment="Center" KeyDown="Path_KeyDown" AutomationProperties.Name="Left file path" />
-                    </DockPanel>
-                    <editor:TextEditor x:Name="LeftEditor" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="Left source" />
-                </Grid>
-                <GridSplitter Grid.Column="1" Width="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,8">
-                        <Button DockPanel.Dock="Right" Click="BrowseRight_Click" Style="{StaticResource IconButton}" Content="&#xE8B7;" ToolTip="Choose right file" AutomationProperties.Name="Choose right file" />
-                        <TextBlock Text="Right" DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBox x:Name="RightPathBox" Padding="5" VerticalContentAlignment="Center" KeyDown="Path_KeyDown" AutomationProperties.Name="Right file path" />
-                    </DockPanel>
-                    <editor:TextEditor x:Name="RightEditor" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="Right source" />
-                </Grid>
-            </Grid>
-            <GridSplitter Grid.Row="1" Height="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" />
-            <Grid Grid.Row="2">
-                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                <DockPanel Margin="0,3,0,8">
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <StackPanel x:Name="MergeCommands" Orientation="Horizontal" IsEnabled="False">
-                        <Button x:Name="UseLeftButton" Click="UseLeft_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE70D;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use left" /></StackPanel></Button>
-                        <Button x:Name="UseRightButton" Click="UseRight_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE70D;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use right" /></StackPanel></Button>
-                        <Button x:Name="UseBothButton" Click="UseBoth_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8AB;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use both" /></StackPanel></Button>
-                        </StackPanel>
-                        <Button Click="Undo_Click" Style="{StaticResource IconButton}" Content="&#xE7A7;" ToolTip="Undo result edit" AutomationProperties.Name="Undo result edit" />
-                        <Button Click="Redo_Click" Style="{StaticResource IconButton}" Content="&#xE7A6;" ToolTip="Redo result edit" AutomationProperties.Name="Redo result edit" />
-                    </StackPanel>
-                    <TextBlock x:Name="ResultLabel" Text="Merge result" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                </DockPanel>
-                <editor:TextEditor x:Name="ResultEditor" Grid.Row="1" ShowLineNumbers="True" IsEnabled="False" TextChanged="Result_TextChanged" AutomationProperties.Name="Merge result" />
-            </Grid>
-        </Grid>
-        <DockPanel Grid.Row="2" Margin="0,10,0,0">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <TextBlock Text="Encoding" VerticalAlignment="Center" Margin="12,0,8,0" />
-                <ComboBox x:Name="EncodingBox" Width="155" SelectedIndex="0" SelectionChanged="Encoding_Changed" AutomationProperties.Name="Result encoding">
-                    <ComboBoxItem Content="Same as left" /><ComboBoxItem Content="UTF-8" /><ComboBoxItem Content="UTF-8 with BOM" /><ComboBoxItem Content="UTF-16 LE" />
-                </ComboBox>
-            </StackPanel>
-            <TextBlock x:Name="StatusText" Text="Ready" Foreground="#4B5563" TextWrapping="Wrap" VerticalAlignment="Center" />
-        </DockPanel>
-    </Grid>
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:Software.MergeTool"
+		xmlns:editor="http://icsharpcode.net/sharpdevelop/avalonedit"
+		Title="Merge Tool" Height="900" Width="1320" MinHeight="600" MinWidth="980"
+		FontFamily="Segoe UI" Background="#F3F4F6" Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
+	<Window.Resources>
+		<Style TargetType="Button">
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="Margin" Value="3,0" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+			<Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+			<Setter Property="Width" Value="34" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+		</Style>
+		<Style TargetType="editor:TextEditor">
+			<Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+			<Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+			<Setter Property="WordWrap" Value="False" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="BorderThickness" Value="1" />
+		</Style>
+	</Window.Resources>
+	<Grid Margin="10">
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+		<DockPanel x:Name="Toolbar" Margin="0,0,0,10">
+			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+				<Button x:Name="SaveButton" Click="Save_Click" IsEnabled="False"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE74E;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Save result" /></StackPanel></Button>
+				<Button x:Name="SaveAsButton" Click="SaveAs_Click" IsEnabled="False" ToolTip="Save result as" AutomationProperties.Name="Save result as" Style="{StaticResource IconButton}" Content="&#xE792;" />
+			</StackPanel>
+			<TextBlock Text="Merge Tool" FontSize="18" FontWeight="SemiBold" Margin="0,0,20,0" VerticalAlignment="Center" Foreground="#111827" />
+			<StackPanel Orientation="Horizontal">
+				<Button Click="Compare_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE9D9;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Compare" /></StackPanel></Button>
+				<Button Click="Swap_Click" Style="{StaticResource IconButton}" Content="&#xE8AB;" ToolTip="Swap files and compare" AutomationProperties.Name="Swap files" />
+				<Button x:Name="PreviousButton" Click="Previous_Click" Style="{StaticResource IconButton}" Content="&#xE70E;" IsEnabled="False" ToolTip="Previous difference" AutomationProperties.Name="Previous difference" />
+				<Button x:Name="NextButton" Click="Next_Click" Style="{StaticResource IconButton}" Content="&#xE70D;" IsEnabled="False" ToolTip="Next difference" AutomationProperties.Name="Next difference" />
+				<TextBlock x:Name="DifferenceLabel" Text="No comparison" VerticalAlignment="Center" Margin="10,0,0,0" />
+			</StackPanel>
+		</DockPanel>
+		<Grid x:Name="Workspace" Grid.Row="1">
+			<Grid.RowDefinitions><RowDefinition Height="3*" MinHeight="180" /><RowDefinition Height="7" /><RowDefinition Height="2*" MinHeight="160" /></Grid.RowDefinitions>
+			<Grid x:Name="SourceArea">
+				<Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="340" /><ColumnDefinition Width="7" /><ColumnDefinition Width="*" MinWidth="340" /></Grid.ColumnDefinitions>
+				<Grid>
+					<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+					<DockPanel Margin="0,0,0,8">
+						<Button DockPanel.Dock="Right" Click="BrowseLeft_Click" Style="{StaticResource IconButton}" Content="&#xE8B7;" ToolTip="Choose left file" AutomationProperties.Name="Choose left file" />
+						<TextBlock Text="Left" DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+						<TextBox x:Name="LeftPathBox" Padding="5" VerticalContentAlignment="Center" KeyDown="Path_KeyDown" AutomationProperties.Name="Left file path" />
+					</DockPanel>
+					<editor:TextEditor x:Name="LeftEditor" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="Left source" />
+				</Grid>
+				<GridSplitter Grid.Column="1" Width="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
+				<Grid Grid.Column="2">
+					<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+					<DockPanel Margin="0,0,0,8">
+						<Button DockPanel.Dock="Right" Click="BrowseRight_Click" Style="{StaticResource IconButton}" Content="&#xE8B7;" ToolTip="Choose right file" AutomationProperties.Name="Choose right file" />
+						<TextBlock Text="Right" DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+						<TextBox x:Name="RightPathBox" Padding="5" VerticalContentAlignment="Center" KeyDown="Path_KeyDown" AutomationProperties.Name="Right file path" />
+					</DockPanel>
+					<editor:TextEditor x:Name="RightEditor" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="Right source" />
+				</Grid>
+			</Grid>
+			<GridSplitter Grid.Row="1" Height="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" />
+			<Grid Grid.Row="2">
+				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+				<DockPanel Margin="0,3,0,8">
+					<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+						<StackPanel x:Name="MergeCommands" Orientation="Horizontal" IsEnabled="False">
+						<Button x:Name="UseLeftButton" Click="UseLeft_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE70D;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use left" /></StackPanel></Button>
+						<Button x:Name="UseRightButton" Click="UseRight_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE70D;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use right" /></StackPanel></Button>
+						<Button x:Name="UseBothButton" Click="UseBoth_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8AB;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Use both" /></StackPanel></Button>
+						</StackPanel>
+						<Button Click="Undo_Click" Style="{StaticResource IconButton}" Content="&#xE7A7;" ToolTip="Undo result edit" AutomationProperties.Name="Undo result edit" />
+						<Button Click="Redo_Click" Style="{StaticResource IconButton}" Content="&#xE7A6;" ToolTip="Redo result edit" AutomationProperties.Name="Redo result edit" />
+					</StackPanel>
+					<TextBlock x:Name="ResultLabel" Text="Merge result" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+				</DockPanel>
+				<editor:TextEditor x:Name="ResultEditor" Grid.Row="1" ShowLineNumbers="True" IsEnabled="False" TextChanged="Result_TextChanged" AutomationProperties.Name="Merge result" />
+			</Grid>
+		</Grid>
+		<DockPanel Grid.Row="2" Margin="0,10,0,0">
+			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+				<TextBlock Text="Encoding" VerticalAlignment="Center" Margin="12,0,8,0" />
+				<ComboBox x:Name="EncodingBox" Width="155" SelectedIndex="0" SelectionChanged="Encoding_Changed" AutomationProperties.Name="Result encoding">
+					<ComboBoxItem Content="Same as left" /><ComboBoxItem Content="UTF-8" /><ComboBoxItem Content="UTF-8 with BOM" /><ComboBoxItem Content="UTF-16 LE" />
+				</ComboBox>
+			</StackPanel>
+			<TextBlock x:Name="StatusText" Text="Ready" Foreground="#4B5563" TextWrapping="Wrap" VerticalAlignment="Center" />
+		</DockPanel>
+	</Grid>
 </Window>

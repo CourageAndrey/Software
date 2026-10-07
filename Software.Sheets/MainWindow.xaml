@@ -1,67 +1,67 @@
 ﻿<Window x:Class="Software.Sheets.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:Software.Sheets"
-        Title="Sheets" Height="820" Width="1260" MinHeight="500" MinWidth="900"
-        FontFamily="Segoe UI" Background="#F3F4F6" Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed"
-        PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
-    <Window.Resources>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="10,6" /><Setter Property="Margin" Value="3,0" /><Setter Property="Focusable" Value="False" />
-            <Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#CDD5D0" /><Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="FontFamily" Value="Segoe Fluent Icons" /><Setter Property="Width" Value="32" /><Setter Property="Height" Value="30" /><Setter Property="Padding" Value="0" />
-        </Style>
-        <Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#E9EFEA" /><Setter Property="HorizontalContentAlignment" Value="Center" /><Setter Property="Padding" Value="8,5" /><Setter Property="BorderBrush" Value="#D5DDD7" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
-        <Style TargetType="DataGridRowHeader"><Setter Property="Background" Value="#E9EFEA" /><Setter Property="HorizontalContentAlignment" Value="Right" /><Setter Property="Padding" Value="8,0" /></Style>
-    </Window.Resources>
-    <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-        <Menu x:Name="MainMenu" Background="#F3F4F6">
-            <MenuItem Header="_File"><MenuItem Header="New XLSX workbook" InputGestureText="Ctrl+N" Click="New_Click" /><MenuItem Header="New XLS workbook" Click="NewXls_Click" /><MenuItem Header="Open..." InputGestureText="Ctrl+O" Click="Open_Click" /><Separator /><MenuItem Header="Save" InputGestureText="Ctrl+S" Click="Save_Click" /><MenuItem Header="Save as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" /><Separator /><MenuItem Header="Exit" Click="Exit_Click" /></MenuItem>
-            <MenuItem Header="_Edit"><MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click" /><MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click" /><Separator /><MenuItem Header="Copy cells" InputGestureText="Ctrl+C" Click="Copy_Click" /><MenuItem Header="Paste cells" InputGestureText="Ctrl+V" Click="Paste_Click" /><MenuItem Header="Clear cells" InputGestureText="Delete" Click="Clear_Click" /></MenuItem>
-            <MenuItem Header="_Worksheet"><MenuItem Header="Add..." Click="AddSheet_Click" /><MenuItem Header="Rename..." Click="RenameSheet_Click" /><MenuItem Header="Delete..." Click="DeleteSheet_Click" /></MenuItem>
-        </Menu>
-        <DockPanel x:Name="Toolbar" Grid.Row="1" Margin="10,7">
-            <TextBlock Text="Sheets" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="#14532D" />
-            <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="New_Click" ToolTip="New XLSX workbook" AutomationProperties.Name="New workbook" />
-                <Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Click="Open_Click" ToolTip="Open XLS or XLSX" AutomationProperties.Name="Open workbook" />
-                <Button Style="{StaticResource IconButton}" Content="&#xE74E;" Click="Save_Click" ToolTip="Save workbook" AutomationProperties.Name="Save workbook" />
-                <Button Style="{StaticResource IconButton}" Content="&#xE792;" Click="SaveAs_Click" ToolTip="Save as" AutomationProperties.Name="Save as" />
-                <Separator Width="12" /><Button x:Name="UndoButton" Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo cell edit" AutomationProperties.Name="Undo" />
-                <Button x:Name="RedoButton" Style="{StaticResource IconButton}" Content="&#xE7A6;" Click="Redo_Click" ToolTip="Redo cell edit" AutomationProperties.Name="Redo" />
-                <Button x:Name="BoldButton" Content="B" FontWeight="Bold" Width="32" Click="Bold_Click" ToolTip="Bold selection" AutomationProperties.Name="Bold selection" />
-                <Button x:Name="ItalicButton" Content="I" FontStyle="Italic" Width="32" Click="Italic_Click" ToolTip="Italic selection" AutomationProperties.Name="Italic selection" />
-                <ComboBox x:Name="NumberFormatBox" Width="135" Margin="8,0" SelectionChanged="NumberFormat_Changed" AutomationProperties.Name="Number format">
-                    <ComboBoxItem Content="General" Tag="General" /><ComboBoxItem Content="Number" Tag="0.00" /><ComboBoxItem Content="Integer" Tag="0" /><ComboBoxItem Content="Percent" Tag="0.00%" /><ComboBoxItem Content="Date" Tag="yyyy-mm-dd" /><ComboBoxItem Content="Text" Tag="@" />
-                </ComboBox>
-                <Button Style="{StaticResource IconButton}" Content="&#xE8E4;" Tag="Left" Click="Alignment_Click" ToolTip="Align left" AutomationProperties.Name="Align left" />
-                <Button Style="{StaticResource IconButton}" Content="&#xE8E3;" Tag="Center" Click="Alignment_Click" ToolTip="Center" AutomationProperties.Name="Center" />
-                <Button Style="{StaticResource IconButton}" Content="&#xE8E2;" Tag="Right" Click="Alignment_Click" ToolTip="Align right" AutomationProperties.Name="Align right" />
-                <Button Click="MoreRows_Click" ToolTip="Add 100 visible rows"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Rows" /></StackPanel></Button>
-                <Button Click="MoreColumns_Click" ToolTip="Add 10 visible columns"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Columns" /></StackPanel></Button>
-            </StackPanel>
-        </DockPanel>
-        <DockPanel x:Name="FormulaToolbar" Grid.Row="2" Margin="10,0,10,8">
-            <TextBox x:Name="AddressBox" DockPanel.Dock="Left" Width="85" Padding="5" KeyDown="Address_KeyDown" AutomationProperties.Name="Cell address" />
-            <Button x:Name="ApplyFormulaButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE73E;" Click="ApplyFormula_Click" ToolTip="Apply cell input" AutomationProperties.Name="Apply cell input" />
-            <TextBlock Text="fx" FontStyle="Italic" Margin="10,0" VerticalAlignment="Center" />
-            <TextBox x:Name="FormulaBox" Padding="5" KeyDown="Formula_KeyDown" AutomationProperties.Name="Cell value or formula" />
-        </DockPanel>
-        <DataGrid x:Name="CellGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
-                  CanUserReorderColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" SelectionMode="Extended" SelectionUnit="Cell"
-                  RowHeaderWidth="55" RowHeight="26" GridLinesVisibility="All" HorizontalGridLinesBrush="#E4E9E5" VerticalGridLinesBrush="#E4E9E5"
-                  Background="White" BorderBrush="#CDD5D0" ClipboardCopyMode="None" CurrentCellChanged="CurrentCell_Changed" CellEditEnding="Cell_EditEnding"
-                  PreparingCellForEdit="Cell_Preparing" LoadingRow="Row_Loading" AutomationProperties.Name="Spreadsheet cells" />
-        <DockPanel x:Name="SheetsToolbar" Grid.Row="4" Background="#E9EFEA" Margin="0,1,0,0">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="5"><Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="AddSheet_Click" ToolTip="Add worksheet" AutomationProperties.Name="Add worksheet" /><Button Style="{StaticResource IconButton}" Content="&#xE8AC;" Click="RenameSheet_Click" ToolTip="Rename worksheet" AutomationProperties.Name="Rename worksheet" /><Button Style="{StaticResource IconButton}" Content="&#xE74D;" Click="DeleteSheet_Click" ToolTip="Delete worksheet" AutomationProperties.Name="Delete worksheet" /></StackPanel>
-            <ListBox x:Name="SheetTabs" BorderThickness="0" Background="Transparent" SelectionChanged="Sheet_Changed" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" AutomationProperties.Name="Worksheets">
-                <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="16,8" /><Setter Property="Margin" Value="2,2" /></Style></ListBox.ItemContainerStyle>
-            </ListBox>
-        </DockPanel>
-        <TextBlock x:Name="StatusText" Grid.Row="5" Text="Ready" Margin="10,7" Foreground="#4B5563" TextTrimming="CharacterEllipsis" />
-    </Grid>
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:Software.Sheets"
+		Title="Sheets" Height="820" Width="1260" MinHeight="500" MinWidth="900"
+		FontFamily="Segoe UI" Background="#F3F4F6" Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed"
+		PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
+	<Window.Resources>
+		<Style TargetType="Button">
+			<Setter Property="Padding" Value="10,6" /><Setter Property="Margin" Value="3,0" /><Setter Property="Focusable" Value="False" />
+			<Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#CDD5D0" /><Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+			<Setter Property="FontFamily" Value="Segoe Fluent Icons" /><Setter Property="Width" Value="32" /><Setter Property="Height" Value="30" /><Setter Property="Padding" Value="0" />
+		</Style>
+		<Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#E9EFEA" /><Setter Property="HorizontalContentAlignment" Value="Center" /><Setter Property="Padding" Value="8,5" /><Setter Property="BorderBrush" Value="#D5DDD7" /><Setter Property="BorderThickness" Value="0,0,1,1" /></Style>
+		<Style TargetType="DataGridRowHeader"><Setter Property="Background" Value="#E9EFEA" /><Setter Property="HorizontalContentAlignment" Value="Right" /><Setter Property="Padding" Value="8,0" /></Style>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+		<Menu x:Name="MainMenu" Background="#F3F4F6">
+			<MenuItem Header="_File"><MenuItem Header="New XLSX workbook" InputGestureText="Ctrl+N" Click="New_Click" /><MenuItem Header="New XLS workbook" Click="NewXls_Click" /><MenuItem Header="Open..." InputGestureText="Ctrl+O" Click="Open_Click" /><Separator /><MenuItem Header="Save" InputGestureText="Ctrl+S" Click="Save_Click" /><MenuItem Header="Save as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" /><Separator /><MenuItem Header="Exit" Click="Exit_Click" /></MenuItem>
+			<MenuItem Header="_Edit"><MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click" /><MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click" /><Separator /><MenuItem Header="Copy cells" InputGestureText="Ctrl+C" Click="Copy_Click" /><MenuItem Header="Paste cells" InputGestureText="Ctrl+V" Click="Paste_Click" /><MenuItem Header="Clear cells" InputGestureText="Delete" Click="Clear_Click" /></MenuItem>
+			<MenuItem Header="_Worksheet"><MenuItem Header="Add..." Click="AddSheet_Click" /><MenuItem Header="Rename..." Click="RenameSheet_Click" /><MenuItem Header="Delete..." Click="DeleteSheet_Click" /></MenuItem>
+		</Menu>
+		<DockPanel x:Name="Toolbar" Grid.Row="1" Margin="10,7">
+			<TextBlock Text="Sheets" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="#14532D" />
+			<StackPanel Orientation="Horizontal">
+				<Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="New_Click" ToolTip="New XLSX workbook" AutomationProperties.Name="New workbook" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Click="Open_Click" ToolTip="Open XLS or XLSX" AutomationProperties.Name="Open workbook" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE74E;" Click="Save_Click" ToolTip="Save workbook" AutomationProperties.Name="Save workbook" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE792;" Click="SaveAs_Click" ToolTip="Save as" AutomationProperties.Name="Save as" />
+				<Separator Width="12" /><Button x:Name="UndoButton" Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo cell edit" AutomationProperties.Name="Undo" />
+				<Button x:Name="RedoButton" Style="{StaticResource IconButton}" Content="&#xE7A6;" Click="Redo_Click" ToolTip="Redo cell edit" AutomationProperties.Name="Redo" />
+				<Button x:Name="BoldButton" Content="B" FontWeight="Bold" Width="32" Click="Bold_Click" ToolTip="Bold selection" AutomationProperties.Name="Bold selection" />
+				<Button x:Name="ItalicButton" Content="I" FontStyle="Italic" Width="32" Click="Italic_Click" ToolTip="Italic selection" AutomationProperties.Name="Italic selection" />
+				<ComboBox x:Name="NumberFormatBox" Width="135" Margin="8,0" SelectionChanged="NumberFormat_Changed" AutomationProperties.Name="Number format">
+					<ComboBoxItem Content="General" Tag="General" /><ComboBoxItem Content="Number" Tag="0.00" /><ComboBoxItem Content="Integer" Tag="0" /><ComboBoxItem Content="Percent" Tag="0.00%" /><ComboBoxItem Content="Date" Tag="yyyy-mm-dd" /><ComboBoxItem Content="Text" Tag="@" />
+				</ComboBox>
+				<Button Style="{StaticResource IconButton}" Content="&#xE8E4;" Tag="Left" Click="Alignment_Click" ToolTip="Align left" AutomationProperties.Name="Align left" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE8E3;" Tag="Center" Click="Alignment_Click" ToolTip="Center" AutomationProperties.Name="Center" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE8E2;" Tag="Right" Click="Alignment_Click" ToolTip="Align right" AutomationProperties.Name="Align right" />
+				<Button Click="MoreRows_Click" ToolTip="Add 100 visible rows"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Rows" /></StackPanel></Button>
+				<Button Click="MoreColumns_Click" ToolTip="Add 10 visible columns"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Columns" /></StackPanel></Button>
+			</StackPanel>
+		</DockPanel>
+		<DockPanel x:Name="FormulaToolbar" Grid.Row="2" Margin="10,0,10,8">
+			<TextBox x:Name="AddressBox" DockPanel.Dock="Left" Width="85" Padding="5" KeyDown="Address_KeyDown" AutomationProperties.Name="Cell address" />
+			<Button x:Name="ApplyFormulaButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE73E;" Click="ApplyFormula_Click" ToolTip="Apply cell input" AutomationProperties.Name="Apply cell input" />
+			<TextBlock Text="fx" FontStyle="Italic" Margin="10,0" VerticalAlignment="Center" />
+			<TextBox x:Name="FormulaBox" Padding="5" KeyDown="Formula_KeyDown" AutomationProperties.Name="Cell value or formula" />
+		</DockPanel>
+		<DataGrid x:Name="CellGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
+					CanUserReorderColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" SelectionMode="Extended" SelectionUnit="Cell"
+					RowHeaderWidth="55" RowHeight="26" GridLinesVisibility="All" HorizontalGridLinesBrush="#E4E9E5" VerticalGridLinesBrush="#E4E9E5"
+					Background="White" BorderBrush="#CDD5D0" ClipboardCopyMode="None" CurrentCellChanged="CurrentCell_Changed" CellEditEnding="Cell_EditEnding"
+					PreparingCellForEdit="Cell_Preparing" LoadingRow="Row_Loading" AutomationProperties.Name="Spreadsheet cells" />
+		<DockPanel x:Name="SheetsToolbar" Grid.Row="4" Background="#E9EFEA" Margin="0,1,0,0">
+			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="5"><Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="AddSheet_Click" ToolTip="Add worksheet" AutomationProperties.Name="Add worksheet" /><Button Style="{StaticResource IconButton}" Content="&#xE8AC;" Click="RenameSheet_Click" ToolTip="Rename worksheet" AutomationProperties.Name="Rename worksheet" /><Button Style="{StaticResource IconButton}" Content="&#xE74D;" Click="DeleteSheet_Click" ToolTip="Delete worksheet" AutomationProperties.Name="Delete worksheet" /></StackPanel>
+			<ListBox x:Name="SheetTabs" BorderThickness="0" Background="Transparent" SelectionChanged="Sheet_Changed" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" AutomationProperties.Name="Worksheets">
+				<ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ListBox.ItemsPanel>
+				<ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="16,8" /><Setter Property="Margin" Value="2,2" /></Style></ListBox.ItemContainerStyle>
+			</ListBox>
+		</DockPanel>
+		<TextBlock x:Name="StatusText" Grid.Row="5" Text="Ready" Margin="10,7" Foreground="#4B5563" TextTrimming="CharacterEllipsis" />
+	</Grid>
 </Window>
