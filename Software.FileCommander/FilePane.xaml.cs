@@ -15,6 +15,7 @@ namespace Software.FileCommander
 		private bool _updatingDrive;
 		private string _sortProperty = nameof(FileEntry.Name);
 		private ListSortDirection _sortDirection = ListSortDirection.Ascending;
+		private CancellationTokenSource? _iconLoading;
 
 		public string CurrentPath { get; private set; } = "";
 		public bool IsLoading { get; private set; }
@@ -61,6 +62,10 @@ namespace Software.FileCommander
 				FolderHeading.Text = fullPath;
 				FolderHeading.ToolTip = fullPath;
 				FileList.ItemsSource = entries;
+				_iconLoading?.Cancel();
+				_iconLoading?.Dispose();
+				_iconLoading = new CancellationTokenSource();
+				ShellIcons.Load(entries, _iconLoading.Token);
 				ApplySort();
 				foreach (var entry in entries.Where(entry => selection.Contains(entry.FullPath, StringComparer.OrdinalIgnoreCase)))
 				{

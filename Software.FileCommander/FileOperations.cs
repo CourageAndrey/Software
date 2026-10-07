@@ -1,11 +1,34 @@
+using System.ComponentModel;
 using System.IO;
+using System.Windows.Media;
 using Microsoft.VisualBasic.FileIO;
 
 namespace Software.FileCommander
 {
-	public sealed record FileEntry(string FullPath, string Name, bool IsDirectory, long Size, DateTime Modified)
+	public sealed class FileEntry(string fullPath, string name, bool isDirectory, long size, DateTime modified) : INotifyPropertyChanged
 	{
-		public string Icon => IsDirectory ? "\uE8B7" : "\uE8A5";
+		private ImageSource? _icon;
+
+		public string FullPath { get; } = fullPath;
+		public string Name { get; } = name;
+		public bool IsDirectory { get; } = isDirectory;
+		public long Size { get; } = size;
+		public DateTime Modified { get; } = modified;
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		public ImageSource? Icon
+		{
+			get => _icon;
+			set
+			{
+				if (_icon != value)
+				{
+					_icon = value;
+					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Icon)));
+				}
+			}
+		}
+
 		public string DisplaySize => IsDirectory ? "<DIR>" : Size switch
 		{
 			>= 1_073_741_824 => $"{Size / 1_073_741_824d:0.#} GB",

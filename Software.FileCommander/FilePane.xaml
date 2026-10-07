@@ -41,7 +41,8 @@
 							<GridViewColumn.CellTemplate>
 								<DataTemplate>
 									<StackPanel Orientation="Horizontal">
-										<TextBlock FontFamily="Segoe Fluent Icons" Text="{Binding Icon}" Margin="0,0,8,0" Foreground="#256B7B" />
+										<Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" UseLayoutRounding="True"
+												RenderOptions.BitmapScalingMode="HighQuality" />
 										<TextBlock Text="{Binding Name}" />
 									</StackPanel>
 								</DataTemplate>
