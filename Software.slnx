@@ -2,6 +2,7 @@
 	<Project Path="Software.Archiver/Software.Archiver.csproj" />
 	<Project Path="Software.Core/Software.Core.csproj" />
 	<Project Path="Software.FileCommander/Software.FileCommander.csproj" />
+	<Project Path="Software.MediaPlayer/Software.MediaPlayer.csproj" Id="a93a08ad-93d6-400a-956a-a7bd6ac81272" />
 	<Project Path="Software.MergeTool/Software.MergeTool.csproj" />
 	<Project Path="Software.Notepad/Software.Notepad.csproj" />
 	<Project Path="Software.PasswordManager/Software.PasswordManager.csproj" Id="10824cc7-304f-4cfa-8d96-a05a96bf9fd7" />
