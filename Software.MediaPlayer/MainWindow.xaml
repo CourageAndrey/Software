@@ -21,7 +21,6 @@
 				<Button Style="{StaticResource IconButton}" Content="&#xE8F4;" Click="AddFolder_Click" ToolTip="Add folder" AutomationProperties.Name="Add folder" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE8A0;" Click="PlaylistVisibility_Click" ToolTip="Show or hide playlist" AutomationProperties.Name="Show or hide playlist" />
 			</StackPanel>
-			<TextBlock Text="Media Player" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
 		</DockPanel>
 		<Grid Grid.Row="1">
 			<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition x:Name="PlaylistDivider" Width="7" /><ColumnDefinition x:Name="PlaylistColumn" Width="310" MinWidth="0" /></Grid.ColumnDefinitions>

@@ -31,7 +31,6 @@
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 		<DockPanel x:Name="Toolbar" Margin="0,0,0,10">
-			<TextBlock Text="Archiver" FontSize="18" FontWeight="SemiBold" Margin="0,0,22,0" VerticalAlignment="Center" Foreground="#111827" />
 			<StackPanel Orientation="Horizontal">
 				<Button Click="Open_Click" ToolTip="Open archive">
 					<StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E5;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Open" /></StackPanel>

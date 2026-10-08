@@ -24,7 +24,6 @@
 			<MenuItem Header="_Worksheet"><MenuItem Header="Add..." Click="AddSheet_Click" /><MenuItem Header="Rename..." Click="RenameSheet_Click" /><MenuItem Header="Delete..." Click="DeleteSheet_Click" /></MenuItem>
 		</Menu>
 		<DockPanel x:Name="Toolbar" Grid.Row="1" Margin="10,7">
-			<TextBlock Text="Sheets" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="#14532D" />
 			<StackPanel Orientation="Horizontal">
 				<Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="New_Click" ToolTip="New XLSX workbook" AutomationProperties.Name="New workbook" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Click="Open_Click" ToolTip="Open XLS or XLSX" AutomationProperties.Name="Open workbook" />

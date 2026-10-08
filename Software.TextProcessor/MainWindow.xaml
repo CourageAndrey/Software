@@ -37,7 +37,6 @@
 			<MenuItem Header="_Insert"><MenuItem Header="Image..." Click="Image_Click" /><MenuItem Header="Table..." Click="Table_Click" /><MenuItem Header="Date and time" Click="Date_Click" /></MenuItem>
 		</Menu>
 		<DockPanel x:Name="FileToolbar" Grid.Row="1" Margin="10,7">
-			<TextBlock Text="Text Processor" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,22,0" />
 			<StackPanel Orientation="Horizontal">
 				<Button Style="{StaticResource IconButton}" Content="&#xE710;" Click="New_Click" ToolTip="New document" AutomationProperties.Name="New document" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Click="Open_Click" ToolTip="Open RTF, TXT, DOC, or DOCX" AutomationProperties.Name="Open document" />

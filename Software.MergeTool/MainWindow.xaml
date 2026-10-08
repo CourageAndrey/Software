@@ -37,7 +37,6 @@
 				<Button x:Name="SaveButton" Click="Save_Click" IsEnabled="False"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE74E;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Save result" /></StackPanel></Button>
 				<Button x:Name="SaveAsButton" Click="SaveAs_Click" IsEnabled="False" ToolTip="Save result as" AutomationProperties.Name="Save result as" Style="{StaticResource IconButton}" Content="&#xE792;" />
 			</StackPanel>
-			<TextBlock Text="Merge Tool" FontSize="18" FontWeight="SemiBold" Margin="0,0,20,0" VerticalAlignment="Center" Foreground="#111827" />
 			<StackPanel Orientation="Horizontal">
 				<Button Click="Compare_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE9D9;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Compare" /></StackPanel></Button>
 				<Button Click="Swap_Click" Style="{StaticResource IconButton}" Content="&#xE8AB;" ToolTip="Swap files and compare" AutomationProperties.Name="Swap files" />
