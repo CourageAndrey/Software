@@ -14,7 +14,9 @@ namespace Software.MediaPlayer
 
 		public PlaybackEngine(bool testOutput = false)
 		{
-			LibVLCSharp.Shared.Core.Initialize();
+			// LibVLCSharp concatenates AppContext.BaseDirectory without a separator, which breaks when the host omits the trailing slash.
+			string architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
+			LibVLCSharp.Shared.Core.Initialize(System.IO.Path.Combine(AppContext.BaseDirectory, "libvlc", $"win-{architecture}"));
 			_vlc = testOutput ? new LibVLC("--quiet", "--no-video-title-show", "--aout=dummy", "--vout=dummy") : new LibVLC("--quiet", "--no-video-title-show");
 			Player = new VlcPlayer(_vlc) { Volume = 75 };
 			Player.EnableKeyInput = false;
