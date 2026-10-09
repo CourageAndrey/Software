@@ -22,10 +22,10 @@ namespace Software.FileCommander
 			ActivatePane(LeftPane);
 		}
 
-		private async void Pane_CommandRequested(FilePane pane, string command)
+		private async void Pane_CommandRequested(FilePane pane, FileCommand command)
 		{
 			ActivatePane(pane);
-			if (command == "Refresh")
+			if (command == FileCommand.Refresh)
 			{
 				await Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
 			}
@@ -59,7 +59,7 @@ namespace Software.FileCommander
 
 		private async void Command_Click(object sender, RoutedEventArgs eventArgs)
 		{
-			if (sender is Button { Tag: string command })
+			if (sender is Button { Tag: FileCommand command })
 			{
 				await ExecuteAsync(command);
 			}
@@ -72,19 +72,19 @@ namespace Software.FileCommander
 				return;
 			}
 
-			string? command = eventArgs.Key switch
+			FileCommand? command = eventArgs.Key switch
 			{
-				Key.F2 => "Rename",
-				Key.F5 => "Copy",
-				Key.F6 => "Move",
-				Key.F7 => "NewFolder",
-				Key.F8 or Key.Delete => "Delete",
+				Key.F2 => FileCommand.Rename,
+				Key.F5 => FileCommand.Copy,
+				Key.F6 => FileCommand.Move,
+				Key.F7 => FileCommand.NewFolder,
+				Key.F8 or Key.Delete => FileCommand.Delete,
 				_ => null
 			};
 			if (command != null)
 			{
 				eventArgs.Handled = true;
-				await ExecuteAsync(command);
+				await ExecuteAsync(command.Value);
 			}
 			else if (eventArgs.Key == Key.Tab && _activePane.IsFileListFocused)
 			{
@@ -95,7 +95,7 @@ namespace Software.FileCommander
 			}
 		}
 
-		private async Task ExecuteAsync(string command)
+		private async Task ExecuteAsync(FileCommand command)
 		{
 			if (_busy || _activePane.IsLoading || string.IsNullOrEmpty(_activePane.CurrentPath))
 			{
@@ -107,7 +107,7 @@ namespace Software.FileCommander
 			string sourceFolder = sourcePane.CurrentPath;
 			string targetFolder = destinationPane.CurrentPath;
 			string[] selected = sourcePane.SelectedPaths;
-			if (command != "NewFolder" && selected.Length == 0)
+			if (command != FileCommand.NewFolder && selected.Length == 0)
 			{
 				OperationStatus.Text = "Select a file or folder first.";
 				return;
@@ -117,23 +117,23 @@ namespace Software.FileCommander
 			string success;
 			switch (command)
 			{
-				case "Copy":
-				case "Move":
+				case FileCommand.Copy:
+				case FileCommand.Move:
 					if (destinationPane.IsLoading || string.IsNullOrEmpty(targetFolder))
 					{
 						return;
 					}
 
-					if (MessageBox.Show(this, $"{command} {selected.Length} selected item(s) to:\n{targetFolder}?", command,
+					if (MessageBox.Show(this, $"{command} {selected.Length} selected item(s) to:\n{targetFolder}?", command.ToString(),
 						MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
 					{
 						return;
 					}
 
-					operation = command == "Copy" ? () => FileOperations.Copy(selected, targetFolder) : () => FileOperations.Move(selected, targetFolder);
+					operation = command == FileCommand.Copy ? () => FileOperations.Copy(selected, targetFolder) : () => FileOperations.Move(selected, targetFolder);
 					success = $"{command} completed: {selected.Length} item(s).";
 					break;
-				case "Rename":
+				case FileCommand.Rename:
 					if (selected.Length != 1)
 					{
 						OperationStatus.Text = "Select exactly one item to rename.";
@@ -148,7 +148,7 @@ namespace Software.FileCommander
 					operation = () => FileOperations.Rename(selected[0], name);
 					success = "Item renamed.";
 					break;
-				case "NewFolder":
+				case FileCommand.NewFolder:
 					string? folderName = PromptForName("New folder", "New folder");
 					if (folderName == null)
 					{
@@ -158,7 +158,7 @@ namespace Software.FileCommander
 					operation = () => FileOperations.CreateFolder(sourceFolder, folderName);
 					success = "Folder created.";
 					break;
-				case "Delete":
+				case FileCommand.Delete:
 					if (MessageBox.Show(this, $"Send {selected.Length} selected item(s) to the Recycle Bin?", "Delete",
 						MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
 					{

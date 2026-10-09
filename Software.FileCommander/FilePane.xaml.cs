@@ -24,7 +24,7 @@ namespace Software.FileCommander
 		public string[] SelectedPaths => FileList.SelectedItems.Cast<FileEntry>().Select(entry => entry.FullPath).ToArray();
 		public event Action<FilePane>? Activated;
 		/// <summary>Raised with "Rename" or "NewFolder" for the app's own commands, or "Refresh" after a shell command that may change files.</summary>
-		public event Action<FilePane, string>? CommandRequested;
+		public event Action<FilePane, FileCommand>? CommandRequested;
 
 		public bool IsActive
 		{
@@ -266,9 +266,9 @@ namespace Software.FileCommander
 				// Rename and New folder use the app's own name prompt, since Explorer's in-place editing needs its window.
 				CommandRequested?.Invoke(this, verb.ToLowerInvariant() switch
 				{
-					"rename" => "Rename",
-					"newfolder" => "NewFolder",
-					_ => "Refresh"
+					"rename" => FileCommand.Rename,
+					"newfolder" => FileCommand.NewFolder,
+					_ => FileCommand.Refresh
 				});
 			}
 		}
