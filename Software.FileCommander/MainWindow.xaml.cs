@@ -8,14 +8,23 @@ namespace Software.FileCommander
 {
 	public partial class MainWindow : Window
 	{
+		private readonly string? _sessionFile;
 		private TabbedPane _activeSide;
 		private bool _busy;
 
 		private FilePane ActivePane => _activeSide.ActivePane;
 		private TabbedPane OtherSide => _activeSide == LeftPane ? RightPane : LeftPane;
+		/// <summary>Completes when the saved tabs, or the user folder on first run, have been opened.</summary>
+		public Task Initialization { get; private set; } = Task.CompletedTask;
 
-		public MainWindow()
+		public MainWindow() : this(Path.Combine(AppContext.BaseDirectory, "tabs.txt"))
 		{
+		}
+
+		/// <param name="sessionFile">Text file that keeps the open tabs between runs, or null to keep nothing.</param>
+		public MainWindow(string? sessionFile)
+		{
+			_sessionFile = sessionFile;
 			InitializeComponent();
 			_activeSide = LeftPane;
 			LeftPane.Activated += ActivateSide;
@@ -40,8 +49,18 @@ namespace Software.FileCommander
 
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
+			Initialization = RestoreTabsAsync();
+			await Initialization;
+		}
+
+		private Task RestoreTabsAsync()
+		{
 			string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-			await Task.WhenAll(LeftPane.ActivePane.NavigateAsync(home), RightPane.ActivePane.NavigateAsync(home));
+			var (left, right) = _sessionFile == null ? (null, null) : TabSession.Load(_sessionFile);
+			return Task.WhenAll(Restore(LeftPane, left), Restore(RightPane, right));
+
+			Task Restore(TabbedPane side, TabSession.Side? saved) =>
+				saved is { Folders.Length: > 0 } ? side.RestoreAsync(saved.Folders, saved.ActiveIndex) : side.ActivePane.NavigateAsync(home);
 		}
 
 		private void ActivateSide(TabbedPane side)
@@ -59,6 +78,11 @@ namespace Software.FileCommander
 			{
 				eventArgs.Cancel = true;
 				OperationStatus.Text = "Wait for the current file operation to finish before closing.";
+			}
+			else if (_sessionFile != null && Initialization.IsCompleted)
+			{
+				// Closing while saved tabs are still opening keeps the previous file instead of saving half-opened tabs.
+				TabSession.Save(_sessionFile, LeftPane.Session, RightPane.Session);
 			}
 		}
 

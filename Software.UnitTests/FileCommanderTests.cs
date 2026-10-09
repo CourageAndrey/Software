@@ -155,8 +155,10 @@ namespace Software.UnitTests
 			_root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"FileCommanderUiTests-{Guid.NewGuid():N}")).FullName;
 			Directory.CreateDirectory(Path.Combine(_root, "child"));
 			File.WriteAllText(Path.Combine(_root, "file.txt"), "content");
-			_window = new MainWindow();
+			_window = new MainWindow(SessionFile);
 		}
+
+		private string SessionFile => Path.Combine(_root, "tabs.txt");
 
 		[TearDown]
 		public void TearDown()
@@ -235,6 +237,44 @@ namespace Software.UnitTests
 				LeftSide.CloseTab(Left);
 				Assert.That(LeftSide.Panes, Has.Count.EqualTo(1));
 			});
+		}
+
+		[Test]
+		public void OpenTabsAreSavedOnCloseAndRestoredOnNextStart()
+		{
+			string child = Path.Combine(_root, "child");
+			RunOnDispatcher(async () =>
+			{
+				_window.Show();
+				await _window.Initialization;
+				await Left.NavigateAsync(_root);
+				await LeftSide.OpenTabAsync(child);
+				await Right.NavigateAsync(child);
+				_window.Close();
+			});
+			Assert.That(File.ReadAllLines(SessionFile), Is.EqualTo(new[] { "[Left]", _root, "*" + child, "[Right]", "*" + child }));
+
+			_window = new MainWindow(SessionFile);
+			RunOnDispatcher(async () =>
+			{
+				_window.Show();
+				await _window.Initialization;
+				Assert.That(LeftSide.Panes.Select(pane => pane.CurrentPath), Is.EqualTo(new[] { _root, child }));
+				Assert.That(Left.CurrentPath, Is.EqualTo(child));
+				Assert.That(Right.CurrentPath, Is.EqualTo(child));
+			});
+		}
+
+		[Test]
+		public void SessionLoadDropsMissingFoldersAndIgnoresLinesOutsideSections()
+		{
+			string child = Path.Combine(_root, "child");
+			File.WriteAllLines(SessionFile, ["stray line", "[Left]", "", Path.Combine(_root, "missing"), child, "*" + _root, "[Right]", "*" + Path.Combine(_root, "gone")]);
+			var (left, right) = TabSession.Load(SessionFile);
+			Assert.That(left!.Folders, Is.EqualTo(new[] { child, _root }));
+			Assert.That(left.ActiveIndex, Is.EqualTo(1));
+			Assert.That(right!.Folders, Is.Empty);
+			Assert.That(TabSession.Load(Path.Combine(_root, "absent.txt")), Is.EqualTo(((TabSession.Side?)null, (TabSession.Side?)null)));
 		}
 
 		private void RunOnDispatcher(Func<Task> action)

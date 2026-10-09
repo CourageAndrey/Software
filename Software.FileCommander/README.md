@@ -12,7 +12,7 @@ dotnet run --project Software.FileCommander
 
 Both panes start in your user folder. Each pane has a drive selector, editable folder path, parent-folder and refresh buttons, and a sortable file list. Enter a path and press Enter, or double-click a folder. Files open in their default Windows application. Ctrl/Shift selection supports multiple items. Drag the middle divider to resize the panes.
 
-Each pane holds folder tabs, as in Total Commander. Ctrl+T or the + button opens a new tab with the current folder, Ctrl+Up opens the selected folder in a new tab, Ctrl+W, the tab's close button, or a middle-click closes a tab, and Ctrl+Tab / Ctrl+Shift+Tab switch between tabs. The tab context menu also offers Close other tabs. The last tab of a pane cannot be closed. Tabs are not saved between runs.
+Each pane holds folder tabs, as in Total Commander. Ctrl+T or the + button opens a new tab with the current folder, Ctrl+Up opens the selected folder in a new tab, Ctrl+W, the tab's close button, or a middle-click closes a tab, and Ctrl+Tab / Ctrl+Shift+Tab switch between tabs. The tab context menu also offers Close other tabs. The last tab of a pane cannot be closed. Open tabs are saved on exit to tabs.txt next to the executable and reopened on the next start; the file lists each pane under a [Left] or [Right] line, one folder per line, with the active tab marked by a leading *. Folders that no longer exist are skipped.
 
 The focused pane is the source; copy and move use the other pane as the destination. F2 renames, F5 copies, F6 moves, F7 creates a folder in the active pane, and F8/Delete deletes. Enter opens an item, Backspace goes to its parent folder, and Tab switches between file lists. Copy and move use the active tab of each pane.
 

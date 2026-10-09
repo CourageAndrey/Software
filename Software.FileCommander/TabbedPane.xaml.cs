@@ -16,7 +16,8 @@ namespace Software.FileCommander
 		private bool _isActive;
 
 		public FilePane ActivePane { get; private set; }
-		public IReadOnlyList<FilePane> Panes => _tabs.Select(tab => tab.Pane).ToArray();
+		public IReadOnlyList<FilePane> Panes => TabStrip.Items.Cast<TabItem>().Select(item => ((FolderTab)item.Tag).Pane).ToArray();
+		public TabSession.Side Session => new(Panes.Select(pane => pane.CurrentPath).ToArray(), TabStrip.SelectedIndex);
 		public event Action<TabbedPane>? Activated;
 		public event Action<TabbedPane, FileCommand>? CommandRequested;
 
@@ -48,6 +49,20 @@ namespace Software.FileCommander
 			{
 				pane.FocusList();
 			}
+		}
+
+		/// <summary>Opens saved tabs at startup: the first folder goes to the initial tab, the rest get tabs of their own.</summary>
+		public Task RestoreAsync(IReadOnlyList<string> folders, int activeIndex)
+		{
+			TabStrip.SelectedIndex = 0;
+			var panes = new List<FilePane> { ActivePane };
+			for (int index = 1; index < folders.Count; index++)
+			{
+				panes.Add(AddTab());
+			}
+
+			TabStrip.SelectedIndex = Math.Clamp(activeIndex, 0, panes.Count - 1);
+			return Task.WhenAll(panes.Select((pane, index) => pane.NavigateAsync(folders[index])));
 		}
 
 		/// <summary>Closes the tab of <paramref name="pane"/>; the last remaining tab stays open.</summary>
@@ -170,7 +185,7 @@ namespace Software.FileCommander
 				tab.Pane.Visibility = tab == selected ? Visibility.Visible : Visibility.Collapsed;
 			}
 			IsActive = _isActive;
-			if (IsLoaded)
+			if (IsLoaded && IsActive)
 			{
 				// Keep the keyboard in the file list, as clicking a tab header would otherwise move focus to the header.
 				Dispatcher.BeginInvoke(() => ActivePane.FocusList(), DispatcherPriority.Input);
