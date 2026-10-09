@@ -145,8 +145,9 @@ namespace Software.UnitTests
 	{
 		private MainWindow _window = null!;
 		private string _root = null!;
-		private FilePane Left => (FilePane)_window.FindName("LeftPane");
-		private FilePane Right => (FilePane)_window.FindName("RightPane");
+		private TabbedPane LeftSide => (TabbedPane)_window.FindName("LeftPane");
+		private FilePane Left => LeftSide.ActivePane;
+		private FilePane Right => ((TabbedPane)_window.FindName("RightPane")).ActivePane;
 
 		[SetUp]
 		public void Setup()
@@ -206,6 +207,33 @@ namespace Software.UnitTests
 				Assert.That(Left.SelectedPaths, Is.EqualTo(new[] { Path.Combine(_root, "file.txt") }));
 				await Left.NavigateAsync("child");
 				Assert.That(Left.CurrentPath, Is.EqualTo(Path.Combine(_root, "child")));
+			});
+		}
+
+		[Test]
+		public void TabsKeepIndependentFoldersAndTheLastTabCannotBeClosed()
+		{
+			RunOnDispatcher(async () =>
+			{
+				_window.Show();
+				await Left.NavigateAsync(_root);
+				var first = Left;
+				await LeftSide.OpenTabAsync(Path.Combine(_root, "child"));
+				Assert.That(LeftSide.Panes, Has.Count.EqualTo(2));
+				Assert.That(Left, Is.Not.SameAs(first));
+				Assert.That(Left.CurrentPath, Is.EqualTo(Path.Combine(_root, "child")));
+				Assert.That(first.CurrentPath, Is.EqualTo(_root));
+				Assert.That(first.Visibility, Is.EqualTo(Visibility.Collapsed));
+
+				LeftSide.SelectAdjacentTab(1);
+				Assert.That(Left, Is.SameAs(first));
+				Assert.That(first.Visibility, Is.EqualTo(Visibility.Visible));
+
+				LeftSide.CloseTab(first);
+				Assert.That(LeftSide.Panes, Has.Count.EqualTo(1));
+				Assert.That(Left.CurrentPath, Is.EqualTo(Path.Combine(_root, "child")));
+				LeftSide.CloseTab(Left);
+				Assert.That(LeftSide.Panes, Has.Count.EqualTo(1));
 			});
 		}
 

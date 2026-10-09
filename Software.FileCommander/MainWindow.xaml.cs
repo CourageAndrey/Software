@@ -8,26 +8,29 @@ namespace Software.FileCommander
 {
 	public partial class MainWindow : Window
 	{
-		private FilePane _activePane;
+		private TabbedPane _activeSide;
 		private bool _busy;
+
+		private FilePane ActivePane => _activeSide.ActivePane;
+		private TabbedPane OtherSide => _activeSide == LeftPane ? RightPane : LeftPane;
 
 		public MainWindow()
 		{
 			InitializeComponent();
-			_activePane = LeftPane;
-			LeftPane.Activated += ActivatePane;
-			RightPane.Activated += ActivatePane;
+			_activeSide = LeftPane;
+			LeftPane.Activated += ActivateSide;
+			RightPane.Activated += ActivateSide;
 			LeftPane.CommandRequested += Pane_CommandRequested;
 			RightPane.CommandRequested += Pane_CommandRequested;
-			ActivatePane(LeftPane);
+			ActivateSide(LeftPane);
 		}
 
-		private async void Pane_CommandRequested(FilePane pane, FileCommand command)
+		private async void Pane_CommandRequested(TabbedPane side, FileCommand command)
 		{
-			ActivatePane(pane);
+			ActivateSide(side);
 			if (command == FileCommand.Refresh)
 			{
-				await Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
+				await RefreshAllAsync();
 			}
 			else
 			{
@@ -38,15 +41,17 @@ namespace Software.FileCommander
 		private async void Window_Loaded(object sender, RoutedEventArgs eventArgs)
 		{
 			string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-			await Task.WhenAll(LeftPane.NavigateAsync(home), RightPane.NavigateAsync(home));
+			await Task.WhenAll(LeftPane.ActivePane.NavigateAsync(home), RightPane.ActivePane.NavigateAsync(home));
 		}
 
-		private void ActivatePane(FilePane pane)
+		private void ActivateSide(TabbedPane side)
 		{
-			_activePane = pane;
-			LeftPane.IsActive = pane == LeftPane;
-			RightPane.IsActive = pane == RightPane;
+			_activeSide = side;
+			LeftPane.IsActive = side == LeftPane;
+			RightPane.IsActive = side == RightPane;
 		}
+
+		private Task RefreshAllAsync() => Task.WhenAll(LeftPane.Panes.Concat(RightPane.Panes).Select(pane => pane.RefreshAsync()));
 
 		private void Window_Closing(object? sender, CancelEventArgs eventArgs)
 		{
@@ -67,7 +72,17 @@ namespace Software.FileCommander
 
 		private async void Window_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
 		{
-			if (_busy || Keyboard.Modifiers != ModifierKeys.None || Keyboard.FocusedElement is TextBox)
+			if (_busy)
+			{
+				return;
+			}
+
+			if (await HandleTabShortcutAsync(eventArgs))
+			{
+				return;
+			}
+
+			if (Keyboard.Modifiers != ModifierKeys.None || Keyboard.FocusedElement is TextBox)
 			{
 				return;
 			}
@@ -86,24 +101,52 @@ namespace Software.FileCommander
 				eventArgs.Handled = true;
 				await ExecuteAsync(command.Value);
 			}
-			else if (eventArgs.Key == Key.Tab && _activePane.IsFileListFocused)
+			else if (eventArgs.Key == Key.Tab && ActivePane.IsFileListFocused)
 			{
 				eventArgs.Handled = true;
-				var other = _activePane == LeftPane ? RightPane : LeftPane;
-				ActivatePane(other);
-				other.FocusList();
+				var other = OtherSide;
+				ActivateSide(other);
+				other.ActivePane.FocusList();
+			}
+		}
+
+		/// <summary>Handles the Total Commander tab shortcuts: Ctrl+T, Ctrl+W, Ctrl+(Shift+)Tab and Ctrl+Up.</summary>
+		private async Task<bool> HandleTabShortcutAsync(KeyEventArgs eventArgs)
+		{
+			var side = _activeSide;
+			switch (Keyboard.Modifiers, eventArgs.Key)
+			{
+				case (ModifierKeys.Control, Key.T):
+					eventArgs.Handled = true;
+					await side.OpenTabAsync(side.ActivePane.CurrentPath);
+					return true;
+				case (ModifierKeys.Control, Key.W):
+					eventArgs.Handled = true;
+					side.CloseTab(side.ActivePane);
+					return true;
+				case (ModifierKeys.Control, Key.Tab):
+				case (ModifierKeys.Control | ModifierKeys.Shift, Key.Tab):
+					eventArgs.Handled = true;
+					side.SelectAdjacentTab(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
+					return true;
+				case (ModifierKeys.Control, Key.Up) when side.ActivePane.IsFileListFocused && side.ActivePane.SelectedFolder is string folder:
+					eventArgs.Handled = true;
+					await side.OpenTabAsync(folder);
+					return true;
+				default:
+					return false;
 			}
 		}
 
 		private async Task ExecuteAsync(FileCommand command)
 		{
-			if (_busy || _activePane.IsLoading || string.IsNullOrEmpty(_activePane.CurrentPath))
+			if (_busy || ActivePane.IsLoading || string.IsNullOrEmpty(ActivePane.CurrentPath))
 			{
 				return;
 			}
 
-			var sourcePane = _activePane;
-			var destinationPane = sourcePane == LeftPane ? RightPane : LeftPane;
+			var sourcePane = ActivePane;
+			var destinationPane = OtherSide.ActivePane;
 			string sourceFolder = sourcePane.CurrentPath;
 			string targetFolder = destinationPane.CurrentPath;
 			string[] selected = sourcePane.SelectedPaths;
@@ -188,7 +231,7 @@ namespace Software.FileCommander
 			}
 			finally
 			{
-				await Task.WhenAll(LeftPane.RefreshAsync(), RightPane.RefreshAsync());
+				await RefreshAllAsync();
 				_busy = false;
 				PaneHost.IsEnabled = CommandBar.IsEnabled = true;
 				BusyProgress.Visibility = Visibility.Collapsed;

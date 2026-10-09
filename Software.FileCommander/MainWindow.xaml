@@ -25,10 +25,10 @@
 				<ColumnDefinition Width="7" />
 				<ColumnDefinition Width="*" MinWidth="350" />
 			</Grid.ColumnDefinitions>
-			<local:FilePane x:Name="LeftPane" />
+			<local:TabbedPane x:Name="LeftPane" />
 			<GridSplitter Grid.Column="1" Width="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
 							Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
-			<local:FilePane x:Name="RightPane" Grid.Column="2" />
+			<local:TabbedPane x:Name="RightPane" Grid.Column="2" />
 		</Grid>
 		<UniformGrid x:Name="CommandBar" Grid.Row="1" Rows="1" Margin="0,10,0,8">
 			<Button Tag="{x:Static local:FileCommand.Rename}" Click="Command_Click">

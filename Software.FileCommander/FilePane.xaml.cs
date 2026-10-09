@@ -22,7 +22,9 @@ namespace Software.FileCommander
 		public bool IsLoading { get; private set; }
 		public bool IsFileListFocused => FileList.IsKeyboardFocusWithin;
 		public string[] SelectedPaths => FileList.SelectedItems.Cast<FileEntry>().Select(entry => entry.FullPath).ToArray();
+		public string? SelectedFolder => FileList.SelectedItem is FileEntry { IsDirectory: true } entry ? entry.FullPath : null;
 		public event Action<FilePane>? Activated;
+		public event Action<FilePane>? Navigated;
 		/// <summary>Raised with "Rename" or "NewFolder" for the app's own commands, or "Refresh" after a shell command that may change files.</summary>
 		public event Action<FilePane, FileCommand>? CommandRequested;
 
@@ -41,6 +43,15 @@ namespace Software.FileCommander
 		private void Pane_Activated(object sender, RoutedEventArgs eventArgs) => Activated?.Invoke(this);
 
 		public void FocusList() => FileList.Focus();
+
+		/// <summary>Stops pending navigation and icon loading when the pane's tab is closed.</summary>
+		public void Close()
+		{
+			_navigationVersion++;
+			_iconLoading?.Cancel();
+			_iconLoading?.Dispose();
+			_iconLoading = null;
+		}
 
 		public Task RefreshAsync() => string.IsNullOrEmpty(CurrentPath) ? Task.CompletedTask : NavigateAsync(CurrentPath);
 
@@ -77,6 +88,7 @@ namespace Software.FileCommander
 				DriveSelector.SelectedItem = Path.GetPathRoot(fullPath);
 				_updatingDrive = false;
 				UpdateStatus();
+				Navigated?.Invoke(this);
 			}
 			catch (Exception exception)
 			{
