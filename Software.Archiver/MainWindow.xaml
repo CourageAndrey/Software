@@ -33,16 +33,28 @@
 		<DockPanel x:Name="Toolbar" Margin="0,0,0,10">
 			<StackPanel Orientation="Horizontal">
 				<Button Click="Open_Click" ToolTip="Open archive">
-					<StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E5;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Open" /></StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E5;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Open" />
+					</StackPanel>
 				</Button>
 				<Button Click="New_Click" ToolTip="New ZIP archive">
-					<StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="New archive" /></StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE710;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="New archive" />
+					</StackPanel>
 				</Button>
 				<Button x:Name="ExtractAllButton" Click="ExtractAll_Click" IsEnabled="False" ToolTip="Extract all entries">
-					<StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B7;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Extract all" /></StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B7;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Extract all" />
+					</StackPanel>
 				</Button>
 				<Button x:Name="ExtractSelectedButton" Click="ExtractSelected_Click" IsEnabled="False" ToolTip="Extract selected entries">
-					<StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B5;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Extract selected" /></StackPanel>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B5;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Extract selected" />
+					</StackPanel>
 				</Button>
 			</StackPanel>
 		</DockPanel>
@@ -56,7 +68,10 @@
 		<TabControl x:Name="Workspace" Grid.Row="2">
 			<TabItem Header="Archive contents">
 				<Grid Margin="8">
-					<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
 					<DockPanel Margin="0,0,0,8">
 						<TextBlock Text="Filter" VerticalAlignment="Center" Margin="0,0,8,0" />
 						<TextBox x:Name="FilterBox" Padding="5" TextChanged="Filter_Changed" AutomationProperties.Name="Filter archive entries" />
@@ -74,21 +89,49 @@
 			</TabItem>
 			<TabItem Header="Create ZIP">
 				<Grid Margin="8">
-					<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
 					<StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-						<Button Click="AddFiles_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8A5;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Add files" /></StackPanel></Button>
-						<Button Click="AddFolder_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F4;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Add folders" /></StackPanel></Button>
-						<Button Click="Remove_Click" ToolTip="Remove selected inputs" AutomationProperties.Name="Remove selected inputs"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE738;" /></Button>
+						<Button Click="AddFiles_Click">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8A5;" Margin="0,0,7,0" VerticalAlignment="Center" />
+								<TextBlock Text="Add files" />
+							</StackPanel>
+						</Button>
+						<Button Click="AddFolder_Click">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F4;" Margin="0,0,7,0" VerticalAlignment="Center" />
+								<TextBlock Text="Add folders" />
+							</StackPanel>
+						</Button>
+						<Button Click="Remove_Click" ToolTip="Remove selected inputs" AutomationProperties.Name="Remove selected inputs">
+							<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE738;" />
+						</Button>
 					</StackPanel>
 					<ListBox x:Name="InputList" Grid.Row="1" SelectionMode="Extended" BorderBrush="#D1D5DB" AutomationProperties.Name="Archive inputs" />
 					<Grid Grid.Row="2" Margin="0,10,0,10">
-						<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
 						<TextBlock Text="Output ZIP" VerticalAlignment="Center" Margin="0,0,10,0" />
 						<TextBox x:Name="OutputPath" Grid.Column="1" Padding="5" AutomationProperties.Name="Output ZIP path" />
-						<Button Grid.Column="2" Click="OutputBrowse_Click" ToolTip="Choose output archive" AutomationProperties.Name="Choose output archive"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B7;" /></Button>
+						<Button Grid.Column="2" Click="OutputBrowse_Click" ToolTip="Choose output archive" AutomationProperties.Name="Choose output archive">
+							<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8B7;" />
+						</Button>
 					</Grid>
 					<DockPanel Grid.Row="3">
-						<Button DockPanel.Dock="Right" Click="Create_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE74E;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Create ZIP" /></StackPanel></Button>
+						<Button DockPanel.Dock="Right" Click="Create_Click">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE74E;" Margin="0,0,7,0" VerticalAlignment="Center" />
+								<TextBlock Text="Create ZIP" />
+							</StackPanel>
+						</Button>
 						<StackPanel Orientation="Horizontal">
 							<TextBlock Text="Compression" VerticalAlignment="Center" Margin="0,0,10,0" />
 							<ComboBox x:Name="Compression" Width="160" SelectedIndex="0" VerticalAlignment="Center" AutomationProperties.Name="Compression level">
@@ -103,10 +146,16 @@
 			</TabItem>
 		</TabControl>
 		<Grid Grid.Row="3" Margin="0,10,0,0">
-			<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="140" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
 			<TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#4B5563" Margin="0,0,12,0" />
 			<ProgressBar x:Name="OperationProgress" Grid.Column="1" Height="7" Minimum="0" Maximum="100" />
-			<Button x:Name="CancelButton" Grid.Column="2" IsEnabled="False" Click="Cancel_Click" ToolTip="Cancel current operation" AutomationProperties.Name="Cancel current operation"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE711;" /></Button>
+			<Button x:Name="CancelButton" Grid.Column="2" IsEnabled="False" Click="Cancel_Click" ToolTip="Cancel current operation" AutomationProperties.Name="Cancel current operation">
+				<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE711;" />
+			</Button>
 		</Grid>
 	</Grid>
 </Window>

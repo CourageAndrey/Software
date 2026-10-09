@@ -7,60 +7,115 @@
 		PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
 	<Window.Resources>
 		<Style TargetType="Button">
-			<Setter Property="Padding" Value="10,6" /><Setter Property="Margin" Value="3,0" />
-			<Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#D1D5DB" /><Setter Property="Cursor" Value="Hand" />
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="Margin" Value="3,0" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="Cursor" Value="Hand" />
 		</Style>
 		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-			<Setter Property="FontFamily" Value="Segoe Fluent Icons" /><Setter Property="Width" Value="32" /><Setter Property="Height" Value="30" /><Setter Property="Padding" Value="0" />
+			<Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="30" />
+			<Setter Property="Padding" Value="0" />
 		</Style>
 		<Style TargetType="ListBoxItem">
 			<Setter Property="Padding" Value="8,5" />
-			<Setter Property="Template"><Setter.Value>
+			<Setter Property="Template">
+				<Setter.Value>
 				<ControlTemplate TargetType="ListBoxItem">
 					<Border x:Name="TabBorder" Background="#E8ECEF" BorderBrush="#D1D5DB" BorderThickness="0,0,1,1" Padding="{TemplateBinding Padding}">
 						<ContentPresenter />
 					</Border>
 					<ControlTemplate.Triggers>
-						<Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="#F3F4F6" /></Trigger>
-						<Trigger Property="IsSelected" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="White" /><Setter TargetName="TabBorder" Property="BorderThickness" Value="0,0,1,0" /></Trigger>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="TabBorder" Property="Background" Value="#F3F4F6" />
+						</Trigger>
+						<Trigger Property="IsSelected" Value="True">
+							<Setter TargetName="TabBorder" Property="Background" Value="White" />
+							<Setter TargetName="TabBorder" Property="BorderThickness" Value="0,0,1,0" />
+						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
-			</Setter.Value></Setter>
+			</Setter.Value>
+		</Setter>
 		</Style>
 	</Window.Resources>
 	<Grid>
-		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
 		<Menu x:Name="MainMenu" Background="#F3F4F6">
 			<MenuItem Header="_File">
-				<MenuItem Header="_New" InputGestureText="Ctrl+N" Click="New_Click" /><MenuItem Header="_Open..." InputGestureText="Ctrl+O" Click="Open_Click" />
-				<Separator /><MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="Save_Click" /><MenuItem Header="Save _as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" />
-				<MenuItem Header="Save all" Click="SaveAll_Click" /><Separator /><MenuItem Header="Close tab" InputGestureText="Ctrl+W" Click="CloseActive_Click" /><MenuItem Header="Exit" Click="Exit_Click" />
+				<MenuItem Header="_New" InputGestureText="Ctrl+N" Click="New_Click" />
+				<MenuItem Header="_Open..." InputGestureText="Ctrl+O" Click="Open_Click" />
+				<Separator />
+				<MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="Save_Click" />
+				<MenuItem Header="Save _as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" />
+				<MenuItem Header="Save all" Click="SaveAll_Click" />
+				<Separator />
+				<MenuItem Header="Close tab" InputGestureText="Ctrl+W" Click="CloseActive_Click" />
+				<MenuItem Header="Exit" Click="Exit_Click" />
 			</MenuItem>
 			<MenuItem Header="_Edit">
-				<MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click" /><MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click" />
-				<Separator /><MenuItem Header="Cut" Click="Cut_Click" /><MenuItem Header="Copy" Click="Copy_Click" /><MenuItem Header="Paste" Click="Paste_Click" /><MenuItem Header="Select all" Click="SelectAll_Click" />
+				<MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click" />
+				<MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click" />
+				<Separator />
+				<MenuItem Header="Cut" Click="Cut_Click" />
+				<MenuItem Header="Copy" Click="Copy_Click" />
+				<MenuItem Header="Paste" Click="Paste_Click" />
+				<MenuItem Header="Select all" Click="SelectAll_Click" />
 			</MenuItem>
-			<MenuItem Header="_Search"><MenuItem Header="Find / replace" InputGestureText="Ctrl+F / Ctrl+H" Click="ShowSearch_Click" /><MenuItem Header="Find next" InputGestureText="F3" Click="FindNext_Click" /></MenuItem>
+			<MenuItem Header="_Search">
+				<MenuItem Header="Find / replace" InputGestureText="Ctrl+F / Ctrl+H" Click="ShowSearch_Click" />
+				<MenuItem Header="Find next" InputGestureText="F3" Click="FindNext_Click" />
+			</MenuItem>
 			<MenuItem Header="_View">
-				<MenuItem x:Name="WrapMenu" Header="Word wrap" IsCheckable="True" Click="Wrap_Click" /><MenuItem x:Name="WhitespaceMenu" Header="Show whitespace" IsCheckable="True" Click="Whitespace_Click" />
+				<MenuItem x:Name="WrapMenu" Header="Word wrap" IsCheckable="True" Click="Wrap_Click" />
+				<MenuItem x:Name="WhitespaceMenu" Header="Show whitespace" IsCheckable="True" Click="Whitespace_Click" />
 				<MenuItem Header="Structure / query pane" IsCheckable="True" IsChecked="True" Click="Inspector_Click" />
-				<MenuItem Header="Refresh structure" Click="RefreshTree_Click" /><Separator />
-				<MenuItem Header="Line endings"><MenuItem Header="Windows (CRLF)" Tag="CRLF" Click="LineEndings_Click" /><MenuItem Header="Unix (LF)" Tag="LF" Click="LineEndings_Click" /><MenuItem Header="Mac (CR)" Tag="CR" Click="LineEndings_Click" /></MenuItem>
+				<MenuItem Header="Refresh structure" Click="RefreshTree_Click" />
+				<Separator />
+				<MenuItem Header="Line endings">
+					<MenuItem Header="Windows (CRLF)" Tag="CRLF" Click="LineEndings_Click" />
+					<MenuItem Header="Unix (LF)" Tag="LF" Click="LineEndings_Click" />
+					<MenuItem Header="Mac (CR)" Tag="CR" Click="LineEndings_Click" />
+				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="_XML Tools">
-				<MenuItem Header="Pretty print" Tag="XmlFormat" Click="Tool_Click" /><MenuItem Header="Compact" Tag="XmlCompact" Click="Tool_Click" /><MenuItem Header="Validate XML" Tag="XmlValidate" Click="Tool_Click" />
-				<MenuItem Header="Validate against XSD..." Tag="XmlSchema" Click="Tool_Click" /><Separator /><MenuItem Header="XML tree" Tag="XmlTree" Click="Tool_Click" /><MenuItem Header="XPath query" Tag="XmlQueryMode" Click="Tool_Click" />
+				<MenuItem Header="Pretty print" Tag="XmlFormat" Click="Tool_Click" />
+				<MenuItem Header="Compact" Tag="XmlCompact" Click="Tool_Click" />
+				<MenuItem Header="Validate XML" Tag="XmlValidate" Click="Tool_Click" />
+				<MenuItem Header="Validate against XSD..." Tag="XmlSchema" Click="Tool_Click" />
+				<Separator />
+				<MenuItem Header="XML tree" Tag="XmlTree" Click="Tool_Click" />
+				<MenuItem Header="XPath query" Tag="XmlQueryMode" Click="Tool_Click" />
 			</MenuItem>
 			<MenuItem Header="_JSON Tools">
-				<MenuItem Header="Pretty print" Tag="JsonFormat" Click="Tool_Click" /><MenuItem Header="Compact" Tag="JsonCompact" Click="Tool_Click" /><MenuItem Header="Validate JSON" Tag="JsonValidate" Click="Tool_Click" />
-				<MenuItem Header="Sort object keys" Tag="JsonSort" Click="Tool_Click" /><Separator /><MenuItem Header="JSON tree" Tag="JsonTree" Click="Tool_Click" /><MenuItem Header="JSONPath query" Tag="JsonQueryMode" Click="Tool_Click" />
+				<MenuItem Header="Pretty print" Tag="JsonFormat" Click="Tool_Click" />
+				<MenuItem Header="Compact" Tag="JsonCompact" Click="Tool_Click" />
+				<MenuItem Header="Validate JSON" Tag="JsonValidate" Click="Tool_Click" />
+				<MenuItem Header="Sort object keys" Tag="JsonSort" Click="Tool_Click" />
+				<Separator />
+				<MenuItem Header="JSON tree" Tag="JsonTree" Click="Tool_Click" />
+				<MenuItem Header="JSONPath query" Tag="JsonQueryMode" Click="Tool_Click" />
 			</MenuItem>
 		</Menu>
 		<DockPanel x:Name="Toolbar" Grid.Row="1" Margin="8,6">
 			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 				<TextBlock Text="Language" VerticalAlignment="Center" Margin="0,0,8,0" />
 				<ComboBox x:Name="LanguageBox" Width="145" SelectionChanged="Language_Changed" AutomationProperties.Name="Language">
-					<ComboBoxItem Content="Text" /><ComboBoxItem Content="XML" /><ComboBoxItem Content="JSON" /><ComboBoxItem Content="C#" /><ComboBoxItem Content="JavaScript" /><ComboBoxItem Content="HTML" /><ComboBoxItem Content="CSS" />
+					<ComboBoxItem Content="Text" />
+					<ComboBoxItem Content="XML" />
+					<ComboBoxItem Content="JSON" />
+					<ComboBoxItem Content="C#" />
+					<ComboBoxItem Content="JavaScript" />
+					<ComboBoxItem Content="HTML" />
+					<ComboBoxItem Content="CSS" />
 				</ComboBox>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal">
@@ -68,69 +123,130 @@
 				<Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Click="Open_Click" ToolTip="Open files" AutomationProperties.Name="Open files" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE74E;" Click="Save_Click" ToolTip="Save" AutomationProperties.Name="Save" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE792;" Click="SaveAs_Click" ToolTip="Save as" AutomationProperties.Name="Save as" />
-				<Separator Width="12" /><Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo" AutomationProperties.Name="Undo" />
+				<Separator Width="12" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo" AutomationProperties.Name="Undo" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE7A6;" Click="Redo_Click" ToolTip="Redo" AutomationProperties.Name="Redo" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE721;" Click="ShowSearch_Click" ToolTip="Find and replace" AutomationProperties.Name="Find and replace" />
-				<Button x:Name="FormatButton" Click="Format_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E9;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Format" /></StackPanel></Button>
-				<Button x:Name="ValidateButton" Click="Validate_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE73E;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Validate" /></StackPanel></Button>
+				<Button x:Name="FormatButton" Click="Format_Click">
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E9;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Format" />
+					</StackPanel>
+				</Button>
+				<Button x:Name="ValidateButton" Click="Validate_Click">
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE73E;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Validate" />
+					</StackPanel>
+				</Button>
 			</StackPanel>
 		</DockPanel>
 		<Grid x:Name="SearchPanel" Grid.Row="2" Visibility="Collapsed" Margin="10,0,10,8">
-			<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
 			<DockPanel>
 				<Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="HideSearch_Click" ToolTip="Close find and replace" AutomationProperties.Name="Close find and replace" />
 				<Button x:Name="FindNextButton" DockPanel.Dock="Right" Content="Find next" Click="FindNext_Click" />
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
-					<CheckBox x:Name="MatchCase" Content="Match case" Margin="0,0,12,0" /><CheckBox x:Name="WholeWord" Content="Whole word" Margin="0,0,12,0" /><CheckBox x:Name="UseRegex" Content="Regex" />
+					<CheckBox x:Name="MatchCase" Content="Match case" Margin="0,0,12,0" />
+					<CheckBox x:Name="WholeWord" Content="Whole word" Margin="0,0,12,0" />
+					<CheckBox x:Name="UseRegex" Content="Regex" />
 				</StackPanel>
-				<TextBlock DockPanel.Dock="Left" Text="Find" Width="70" VerticalAlignment="Center" /><TextBox x:Name="FindBox" Padding="5" KeyDown="Find_KeyDown" AutomationProperties.Name="Find text" />
+				<TextBlock DockPanel.Dock="Left" Text="Find" Width="70" VerticalAlignment="Center" />
+				<TextBox x:Name="FindBox" Padding="5" KeyDown="Find_KeyDown" AutomationProperties.Name="Find text" />
 			</DockPanel>
 			<DockPanel Grid.Row="1" Margin="0,6,0,0">
-				<Button x:Name="ReplaceAllButton" DockPanel.Dock="Right" Content="Replace all" Click="ReplaceAll_Click" /><Button DockPanel.Dock="Right" Content="Replace" Click="Replace_Click" />
-				<TextBlock DockPanel.Dock="Left" Text="Replace" Width="70" VerticalAlignment="Center" /><TextBox x:Name="ReplaceBox" Padding="5" AutomationProperties.Name="Replacement text" />
+				<Button x:Name="ReplaceAllButton" DockPanel.Dock="Right" Content="Replace all" Click="ReplaceAll_Click" />
+				<Button DockPanel.Dock="Right" Content="Replace" Click="Replace_Click" />
+				<TextBlock DockPanel.Dock="Left" Text="Replace" Width="70" VerticalAlignment="Center" />
+				<TextBox x:Name="ReplaceBox" Padding="5" AutomationProperties.Name="Replacement text" />
 			</DockPanel>
 		</Grid>
 		<Grid x:Name="Workspace" Grid.Row="3">
-			<Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="500" /><ColumnDefinition x:Name="InspectorDivider" Width="7" /><ColumnDefinition x:Name="InspectorColumn" Width="330" /></Grid.ColumnDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" MinWidth="500" />
+				<ColumnDefinition x:Name="InspectorDivider" Width="7" />
+				<ColumnDefinition x:Name="InspectorColumn" Width="330" />
+			</Grid.ColumnDefinitions>
 			<Grid>
-				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
 				<DockPanel Background="#E8ECEF">
 					<Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE710;" Click="New_Click" ToolTip="New tab" AutomationProperties.Name="New tab" Margin="5" />
 					<ListBox x:Name="TabStrip" Background="Transparent" BorderThickness="0" SelectionMode="Single" SelectionChanged="Tab_Changed"
 								ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" AutomationProperties.Name="Document tabs">
-						<ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ListBox.ItemsPanel>
-						<ListBox.ItemTemplate><DataTemplate><DockPanel Width="180">
+						<ListBox.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ListBox.ItemsPanel>
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<DockPanel Width="180">
 							<Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Tag="{Binding}" Click="CloseTab_Click" ToolTip="Close tab" AutomationProperties.Name="Close tab" />
 							<TextBlock Text="{Binding Title}" ToolTip="{Binding FilePath}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-						</DockPanel></DataTemplate></ListBox.ItemTemplate>
+						</DockPanel>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
 					</ListBox>
 				</DockPanel>
 				<Grid x:Name="EditorHost" Grid.Row="1" />
 			</Grid>
 			<GridSplitter x:Name="InspectorSplitter" Grid.Column="1" Width="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
 			<Grid x:Name="Inspector" Grid.Column="2" Background="White" Margin="0,0,8,0">
-				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
 				<DockPanel Margin="8">
 					<Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE72C;" Click="RefreshTree_Click" ToolTip="Refresh structure" AutomationProperties.Name="Refresh structure" />
 					<TextBlock Text="Structure" FontWeight="SemiBold" VerticalAlignment="Center" />
 				</DockPanel>
 				<Grid Grid.Row="1" Margin="8,0,8,8">
-					<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-					<ComboBox x:Name="QueryMode" SelectedIndex="0" Margin="0,0,0,6" AutomationProperties.Name="Query type"><ComboBoxItem Content="JSONPath" /><ComboBoxItem Content="XPath" /></ComboBox>
-					<DockPanel Grid.Row="1"><Button x:Name="RunQueryButton" DockPanel.Dock="Right" Click="Query_Click" Style="{StaticResource IconButton}" Content="&#xE768;" ToolTip="Run query" AutomationProperties.Name="Run query" /><TextBox x:Name="QueryBox" Padding="5" KeyDown="Query_KeyDown" AutomationProperties.Name="Query expression" /></DockPanel>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<ComboBox x:Name="QueryMode" SelectedIndex="0" Margin="0,0,0,6" AutomationProperties.Name="Query type">
+						<ComboBoxItem Content="JSONPath" />
+						<ComboBoxItem Content="XPath" />
+					</ComboBox>
+					<DockPanel Grid.Row="1">
+						<Button x:Name="RunQueryButton" DockPanel.Dock="Right" Click="Query_Click" Style="{StaticResource IconButton}" Content="&#xE768;" ToolTip="Run query" AutomationProperties.Name="Run query" />
+						<TextBox x:Name="QueryBox" Padding="5" KeyDown="Query_KeyDown" AutomationProperties.Name="Query expression" />
+					</DockPanel>
 				</Grid>
 				<TabControl x:Name="InspectorTabs" Grid.Row="2" BorderBrush="#D1D5DB">
-					<TabItem Header="Tree"><TreeView x:Name="StructureTree" SelectedItemChanged="Tree_Selected" BorderThickness="0">
-						<TreeView.ItemTemplate><HierarchicalDataTemplate ItemsSource="{Binding Children}"><TextBlock Text="{Binding Label}" ToolTip="{Binding Path}" /></HierarchicalDataTemplate></TreeView.ItemTemplate>
-					</TreeView></TabItem>
-					<TabItem Header="Results"><TextBox x:Name="QueryResults" IsReadOnly="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" BorderThickness="0" Padding="6" AutomationProperties.Name="Tool results" /></TabItem>
+					<TabItem Header="Tree">
+						<TreeView x:Name="StructureTree" SelectedItemChanged="Tree_Selected" BorderThickness="0">
+						<TreeView.ItemTemplate>
+							<HierarchicalDataTemplate ItemsSource="{Binding Children}">
+								<TextBlock Text="{Binding Label}" ToolTip="{Binding Path}" />
+							</HierarchicalDataTemplate>
+						</TreeView.ItemTemplate>
+					</TreeView>
+				</TabItem>
+					<TabItem Header="Results">
+						<TextBox x:Name="QueryResults" IsReadOnly="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" BorderThickness="0" Padding="6" AutomationProperties.Name="Tool results" />
+					</TabItem>
 				</TabControl>
 			</Grid>
 		</Grid>
 		<DockPanel Grid.Row="4" Margin="10,7">
 			<StackPanel x:Name="SettingsBar" DockPanel.Dock="Right" Orientation="Horizontal">
 				<Slider x:Name="FontSizeSlider" Minimum="10" Maximum="24" Value="14" Width="90" Margin="12,0" VerticalAlignment="Center" ValueChanged="FontSize_Changed" ToolTip="Editor font size" />
-				<ComboBox x:Name="EncodingBox" Width="160" SelectionChanged="Encoding_Changed" AutomationProperties.Name="File encoding"><ComboBoxItem Content="Original encoding" /><ComboBoxItem Content="UTF-8" /><ComboBoxItem Content="UTF-8 with BOM" /><ComboBoxItem Content="UTF-16 LE" /><ComboBoxItem Content="UTF-16 BE" /></ComboBox>
+				<ComboBox x:Name="EncodingBox" Width="160" SelectionChanged="Encoding_Changed" AutomationProperties.Name="File encoding">
+					<ComboBoxItem Content="Original encoding" />
+					<ComboBoxItem Content="UTF-8" />
+					<ComboBoxItem Content="UTF-8 with BOM" />
+					<ComboBoxItem Content="UTF-16 LE" />
+					<ComboBoxItem Content="UTF-16 BE" />
+				</ComboBox>
 			</StackPanel>
 			<TextBlock x:Name="StatusText" Text="Ready" Foreground="#4B5563" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 		</DockPanel>

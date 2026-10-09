@@ -7,14 +7,37 @@
 	FontFamily="Segoe UI" Background="#F2F4F3" Loaded="Window_Loaded" Closing="Window_Closing"
 	PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
 	<Window.Resources>
-		<Style TargetType="Button"><Setter Property="Padding" Value="10,6" /><Setter Property="Margin" Value="3,0" /><Setter Property="Focusable" Value="False" /><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#CFD5D1" /><Setter Property="Cursor" Value="Hand" /></Style>
-		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="FontFamily" Value="Segoe Fluent Icons" /><Setter Property="Width" Value="34" /><Setter Property="Height" Value="32" /><Setter Property="Padding" Value="0" /></Style>
+		<Style TargetType="Button">
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="Margin" Value="3,0" />
+			<Setter Property="Focusable" Value="False" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#CFD5D1" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+			<Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+			<Setter Property="Width" Value="34" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+		</Style>
 	</Window.Resources>
 	<Grid>
-		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
 		<DockPanel x:Name="Toolbar" Margin="10,8">
 			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-				<Button Click="OpenFiles_Click"><StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E5;" Margin="0,0,7,0" VerticalAlignment="Center" /><TextBlock Text="Open files" /></StackPanel></Button>
+				<Button Click="OpenFiles_Click">
+					<StackPanel Orientation="Horizontal">
+						<TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8E5;" Margin="0,0,7,0" VerticalAlignment="Center" />
+						<TextBlock Text="Open files" />
+					</StackPanel>
+				</Button>
 				<Button Style="{StaticResource IconButton}" Content="&#xE774;" Click="OpenStream_Click" ToolTip="Open network stream" AutomationProperties.Name="Open network stream" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE8A5;" Click="OpenPlaylist_Click" ToolTip="Load playlist" AutomationProperties.Name="Load playlist" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE74E;" Click="SavePlaylist_Click" ToolTip="Save playlist" AutomationProperties.Name="Save playlist" />
@@ -23,7 +46,11 @@
 			</StackPanel>
 		</DockPanel>
 		<Grid Grid.Row="1">
-			<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition x:Name="PlaylistDivider" Width="7" /><ColumnDefinition x:Name="PlaylistColumn" Width="310" MinWidth="0" /></Grid.ColumnDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition x:Name="PlaylistDivider" Width="7" />
+				<ColumnDefinition x:Name="PlaylistColumn" Width="310" MinWidth="0" />
+			</Grid.ColumnDefinitions>
 			<vlc:VideoView x:Name="VideoSurface" Background="#101412">
 				<Grid Background="Transparent" MouseLeftButtonDown="Video_Click" PreviewKeyDown="Window_PreviewKeyDown">
 					<Grid x:Name="AudioSurface" Background="#101412">
@@ -37,10 +64,21 @@
 			</vlc:VideoView>
 			<GridSplitter x:Name="PlaylistSplitter" Grid.Column="1" Width="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
 			<Grid x:Name="PlaylistPanel" Grid.Column="2" Background="White" Margin="0,0,8,0">
-				<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-				<DockPanel Margin="10"><TextBlock Text="Playlist" FontWeight="SemiBold" VerticalAlignment="Center" /><TextBlock x:Name="PlaylistCount" DockPanel.Dock="Right" Foreground="#66716A" HorizontalAlignment="Right" /></DockPanel>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<DockPanel Margin="10">
+					<TextBlock Text="Playlist" FontWeight="SemiBold" VerticalAlignment="Center" />
+					<TextBlock x:Name="PlaylistCount" DockPanel.Dock="Right" Foreground="#66716A" HorizontalAlignment="Right" />
+				</DockPanel>
 				<ListBox x:Name="PlaylistList" Grid.Row="1" BorderThickness="0" SelectionMode="Extended" MouseDoubleClick="Playlist_DoubleClick" KeyDown="Playlist_KeyDown" AutomationProperties.Name="Playlist">
-					<ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Title}" ToolTip="{Binding Location}" TextTrimming="CharacterEllipsis" Padding="5" /></DataTemplate></ListBox.ItemTemplate>
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Title}" ToolTip="{Binding Location}" TextTrimming="CharacterEllipsis" Padding="5" />
+						</DataTemplate>
+					</ListBox.ItemTemplate>
 				</ListBox>
 				<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="6">
 					<Button Style="{StaticResource IconButton}" Content="&#xE738;" Click="Remove_Click" ToolTip="Remove selected items" AutomationProperties.Name="Remove selected items" />
@@ -49,17 +87,30 @@
 			</Grid>
 		</Grid>
 		<Grid Grid.Row="2" Margin="12,8,12,4">
-			<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
 			<TextBlock x:Name="TrackLabel" Text="No media" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
 			<TextBlock x:Name="TimeLabel" Grid.Column="1" Text="00:00 / 00:00" Margin="12,0,0,0" FontFamily="Cascadia Mono, Consolas" Foreground="#526058" />
 		</Grid>
 		<Slider x:Name="SeekSlider" Grid.Row="3" Minimum="0" Maximum="1000" Value="0" Margin="10,0" IsEnabled="False" IsMoveToPointEnabled="True"
 			PreviewMouseLeftButtonDown="Seek_Start" PreviewMouseLeftButtonUp="Seek_End" LostMouseCapture="Seek_End" KeyUp="Seek_KeyUp" ToolTip="Playback position" AutomationProperties.Name="Playback position" />
 		<Grid Grid.Row="4" Margin="10,6,10,10">
-			<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
 			<DockPanel x:Name="PlaybackControls">
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-					<ComboBox x:Name="SpeedBox" Width="85" SelectedIndex="2" SelectionChanged="Speed_Changed" Margin="8,0" ToolTip="Playback speed" AutomationProperties.Name="Playback speed"><ComboBoxItem Content="0.5x" Tag="0.5" /><ComboBoxItem Content="0.75x" Tag="0.75" /><ComboBoxItem Content="1x" Tag="1" /><ComboBoxItem Content="1.25x" Tag="1.25" /><ComboBoxItem Content="1.5x" Tag="1.5" /><ComboBoxItem Content="2x" Tag="2" /></ComboBox>
+					<ComboBox x:Name="SpeedBox" Width="85" SelectedIndex="2" SelectionChanged="Speed_Changed" Margin="8,0" ToolTip="Playback speed" AutomationProperties.Name="Playback speed">
+						<ComboBoxItem Content="0.5x" Tag="0.5" />
+						<ComboBoxItem Content="0.75x" Tag="0.75" />
+						<ComboBoxItem Content="1x" Tag="1" />
+						<ComboBoxItem Content="1.25x" Tag="1.25" />
+						<ComboBoxItem Content="1.5x" Tag="1.5" />
+						<ComboBoxItem Content="2x" Tag="2" />
+					</ComboBox>
 					<Button x:Name="MuteButton" Style="{StaticResource IconButton}" Content="&#xE767;" Click="Mute_Click" ToolTip="Mute" AutomationProperties.Name="Mute" />
 					<Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Value="75" Width="110" VerticalAlignment="Center" ValueChanged="Volume_Changed" ToolTip="Volume" AutomationProperties.Name="Volume" />
 					<Button Style="{StaticResource IconButton}" Content="&#xE740;" Click="Fullscreen_Click" ToolTip="Fullscreen" AutomationProperties.Name="Fullscreen" />
@@ -70,7 +121,11 @@
 					<Button x:Name="StopButton" Style="{StaticResource IconButton}" Content="&#xE71A;" Click="Stop_Click" ToolTip="Stop" AutomationProperties.Name="Stop" />
 					<Button x:Name="NextButton" Style="{StaticResource IconButton}" Content="&#xE893;" Click="Next_Click" ToolTip="Next track" AutomationProperties.Name="Next track" />
 					<CheckBox x:Name="ShuffleBox" Content="Shuffle" Checked="Modes_Changed" Unchecked="Modes_Changed" VerticalAlignment="Center" Margin="12,0" />
-					<ComboBox x:Name="RepeatBox" Width="110" SelectedIndex="0" SelectionChanged="Repeat_Changed" ToolTip="Repeat mode" AutomationProperties.Name="Repeat mode"><ComboBoxItem Content="Repeat off" /><ComboBoxItem Content="Repeat all" /><ComboBoxItem Content="Repeat one" /></ComboBox>
+					<ComboBox x:Name="RepeatBox" Width="110" SelectedIndex="0" SelectionChanged="Repeat_Changed" ToolTip="Repeat mode" AutomationProperties.Name="Repeat mode">
+						<ComboBoxItem Content="Repeat off" />
+						<ComboBoxItem Content="Repeat all" />
+						<ComboBoxItem Content="Repeat one" />
+					</ComboBox>
 				</StackPanel>
 			</DockPanel>
 			<TextBlock x:Name="StatusText" Grid.Row="1" Text="Ready" Foreground="#526058" TextTrimming="CharacterEllipsis" Margin="2,8,0,0" />

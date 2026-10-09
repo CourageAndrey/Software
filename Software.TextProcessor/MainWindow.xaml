@@ -7,34 +7,65 @@
 		PreviewKeyDown="Window_PreviewKeyDown" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
 	<Window.Resources>
 		<Style TargetType="Button">
-			<Setter Property="Padding" Value="10,6" /><Setter Property="Margin" Value="3,0" /><Setter Property="Focusable" Value="False" />
-			<Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#D1D5DB" /><Setter Property="Cursor" Value="Hand" />
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="Margin" Value="3,0" />
+			<Setter Property="Focusable" Value="False" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="Cursor" Value="Hand" />
 		</Style>
 		<Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-			<Setter Property="FontFamily" Value="Segoe Fluent Icons" /><Setter Property="Width" Value="32" /><Setter Property="Height" Value="30" /><Setter Property="Padding" Value="0" />
+			<Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="30" />
+			<Setter Property="Padding" Value="0" />
 		</Style>
 		<Style TargetType="ToggleButton">
-			<Setter Property="Width" Value="32" /><Setter Property="Height" Value="30" /><Setter Property="Margin" Value="2,0" />
-			<Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#D1D5DB" /><Setter Property="Focusable" Value="False" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="30" />
+			<Setter Property="Margin" Value="2,0" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="Focusable" Value="False" />
 		</Style>
 	</Window.Resources>
 	<Grid>
-		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
 		<Menu x:Name="MainMenu" Background="#F3F4F6">
 			<MenuItem Header="_File">
-				<MenuItem Header="_New" InputGestureText="Ctrl+N" Click="New_Click" /><MenuItem Header="_Open..." InputGestureText="Ctrl+O" Click="Open_Click" />
-				<Separator /><MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="Save_Click" /><MenuItem Header="Save _as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" />
-				<Separator /><MenuItem Header="_Print..." InputGestureText="Ctrl+P" Click="Print_Click" /><Separator /><MenuItem Header="Exit" Click="Exit_Click" />
+				<MenuItem Header="_New" InputGestureText="Ctrl+N" Click="New_Click" />
+				<MenuItem Header="_Open..." InputGestureText="Ctrl+O" Click="Open_Click" />
+				<Separator />
+				<MenuItem Header="_Save" InputGestureText="Ctrl+S" Click="Save_Click" />
+				<MenuItem Header="Save _as..." InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click" />
+				<Separator />
+				<MenuItem Header="_Print..." InputGestureText="Ctrl+P" Click="Print_Click" />
+				<Separator />
+				<MenuItem Header="Exit" Click="Exit_Click" />
 			</MenuItem>
 			<MenuItem Header="_Edit">
-				<MenuItem Header="Undo" Click="Undo_Click" /><MenuItem Header="Redo" Click="Redo_Click" /><Separator />
+				<MenuItem Header="Undo" Click="Undo_Click" />
+				<MenuItem Header="Redo" Click="Redo_Click" />
+				<Separator />
 				<MenuItem Header="Cut" Command="ApplicationCommands.Cut" CommandTarget="{Binding ElementName=Editor}" />
 				<MenuItem Header="Copy" Command="ApplicationCommands.Copy" CommandTarget="{Binding ElementName=Editor}" />
 				<MenuItem Header="Paste" Command="ApplicationCommands.Paste" CommandTarget="{Binding ElementName=Editor}" />
 				<MenuItem Header="Select all" Command="ApplicationCommands.SelectAll" CommandTarget="{Binding ElementName=Editor}" />
-				<Separator /><MenuItem Header="Find / replace" InputGestureText="Ctrl+F / Ctrl+H" Click="ShowSearch_Click" />
+				<Separator />
+				<MenuItem Header="Find / replace" InputGestureText="Ctrl+F / Ctrl+H" Click="ShowSearch_Click" />
 			</MenuItem>
-			<MenuItem Header="_Insert"><MenuItem Header="Image..." Click="Image_Click" /><MenuItem Header="Table..." Click="Table_Click" /><MenuItem Header="Date and time" Click="Date_Click" /></MenuItem>
+			<MenuItem Header="_Insert">
+				<MenuItem Header="Image..." Click="Image_Click" />
+				<MenuItem Header="Table..." Click="Table_Click" />
+				<MenuItem Header="Date and time" Click="Date_Click" />
+			</MenuItem>
 		</Menu>
 		<DockPanel x:Name="FileToolbar" Grid.Row="1" Margin="10,7">
 			<StackPanel Orientation="Horizontal">
@@ -43,7 +74,8 @@
 				<Button Style="{StaticResource IconButton}" Content="&#xE74E;" Click="Save_Click" ToolTip="Save" AutomationProperties.Name="Save" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE792;" Click="SaveAs_Click" ToolTip="Save as" AutomationProperties.Name="Save as" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE749;" Click="Print_Click" ToolTip="Print" AutomationProperties.Name="Print" />
-				<Separator Width="12" /><Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo" AutomationProperties.Name="Undo" />
+				<Separator Width="12" />
+				<Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Click="Undo_Click" ToolTip="Undo" AutomationProperties.Name="Undo" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE7A6;" Click="Redo_Click" ToolTip="Redo" AutomationProperties.Name="Redo" />
 				<Button Style="{StaticResource IconButton}" Content="&#xE721;" Click="ShowSearch_Click" ToolTip="Find and replace" AutomationProperties.Name="Find and replace" />
 				<Button Style="{StaticResource IconButton}" Content="&#xEB9F;" Click="Image_Click" ToolTip="Insert image" AutomationProperties.Name="Insert image" />
@@ -55,12 +87,28 @@
 			<ComboBox x:Name="SizeBox" Width="62" IsEditable="True" SelectionChanged="Size_Changed" KeyDown="Size_KeyDown" AutomationProperties.Name="Font size" Margin="0,0,8,0" />
 			<ToggleButton x:Name="BoldButton" Content="B" FontWeight="Bold" Click="Bold_Click" ToolTip="Bold" AutomationProperties.Name="Bold" />
 			<ToggleButton x:Name="ItalicButton" Content="I" FontStyle="Italic" Click="Italic_Click" ToolTip="Italic" AutomationProperties.Name="Italic" />
-			<ToggleButton x:Name="UnderlineButton" Click="Underline_Click" ToolTip="Underline" AutomationProperties.Name="Underline"><TextBlock Text="U" TextDecorations="Underline" /></ToggleButton>
-			<ToggleButton x:Name="StrikeButton" Click="Strike_Click" ToolTip="Strikethrough" AutomationProperties.Name="Strikethrough"><TextBlock Text="S" TextDecorations="Strikethrough" /></ToggleButton>
+			<ToggleButton x:Name="UnderlineButton" Click="Underline_Click" ToolTip="Underline" AutomationProperties.Name="Underline">
+				<TextBlock Text="U" TextDecorations="Underline" />
+			</ToggleButton>
+			<ToggleButton x:Name="StrikeButton" Click="Strike_Click" ToolTip="Strikethrough" AutomationProperties.Name="Strikethrough">
+				<TextBlock Text="S" TextDecorations="Strikethrough" />
+			</ToggleButton>
 			<ComboBox x:Name="ColorBox" Width="55" Margin="8,0" SelectionChanged="Color_Changed" ToolTip="Text color" AutomationProperties.Name="Text color">
-				<ComboBoxItem Tag="#111827"><Rectangle Fill="#111827" Width="25" Height="12" /></ComboBoxItem><ComboBoxItem Tag="#B91C1C"><Rectangle Fill="#B91C1C" Width="25" Height="12" /></ComboBoxItem>
-				<ComboBoxItem Tag="#166534"><Rectangle Fill="#166534" Width="25" Height="12" /></ComboBoxItem><ComboBoxItem Tag="#1D4ED8"><Rectangle Fill="#1D4ED8" Width="25" Height="12" /></ComboBoxItem>
-				<ComboBoxItem Tag="#A16207"><Rectangle Fill="#A16207" Width="25" Height="12" /></ComboBoxItem>
+				<ComboBoxItem Tag="#111827">
+					<Rectangle Fill="#111827" Width="25" Height="12" />
+				</ComboBoxItem>
+				<ComboBoxItem Tag="#B91C1C">
+					<Rectangle Fill="#B91C1C" Width="25" Height="12" />
+				</ComboBoxItem>
+				<ComboBoxItem Tag="#166534">
+					<Rectangle Fill="#166534" Width="25" Height="12" />
+				</ComboBoxItem>
+				<ComboBoxItem Tag="#1D4ED8">
+					<Rectangle Fill="#1D4ED8" Width="25" Height="12" />
+				</ComboBoxItem>
+				<ComboBoxItem Tag="#A16207">
+					<Rectangle Fill="#A16207" Width="25" Height="12" />
+				</ComboBoxItem>
 			</ComboBox>
 			<Button Style="{StaticResource IconButton}" Content="&#xE8E4;" Command="EditingCommands.AlignLeft" CommandTarget="{Binding ElementName=Editor}" ToolTip="Align left" AutomationProperties.Name="Align left" />
 			<Button Style="{StaticResource IconButton}" Content="&#xE8E3;" Command="EditingCommands.AlignCenter" CommandTarget="{Binding ElementName=Editor}" ToolTip="Center" AutomationProperties.Name="Center" />
@@ -72,31 +120,45 @@
 			<Button Style="{StaticResource IconButton}" Content="&#xE8FB;" Command="EditingCommands.IncreaseIndentation" CommandTarget="{Binding ElementName=Editor}" ToolTip="Increase indent" AutomationProperties.Name="Increase indent" />
 		</WrapPanel>
 		<Grid x:Name="SearchPanel" Grid.Row="3" Margin="10,0,10,10" Visibility="Collapsed">
-			<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
 			<DockPanel>
 				<Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="HideSearch_Click" ToolTip="Close search" AutomationProperties.Name="Close search" />
 				<Button x:Name="FindNextButton" DockPanel.Dock="Right" Content="Find next" Click="FindNext_Click" />
 				<CheckBox x:Name="MatchCase" DockPanel.Dock="Right" Content="Match case" VerticalAlignment="Center" Margin="8,0" />
-				<TextBlock Text="Find" Width="65" VerticalAlignment="Center" /><TextBox x:Name="FindBox" Padding="5" KeyDown="Find_KeyDown" AutomationProperties.Name="Find text" />
+				<TextBlock Text="Find" Width="65" VerticalAlignment="Center" />
+				<TextBox x:Name="FindBox" Padding="5" KeyDown="Find_KeyDown" AutomationProperties.Name="Find text" />
 			</DockPanel>
 			<DockPanel Grid.Row="1" Margin="0,5,0,0">
-				<Button x:Name="ReplaceAllButton" DockPanel.Dock="Right" Content="Replace all" Click="ReplaceAll_Click" /><Button DockPanel.Dock="Right" Content="Replace" Click="Replace_Click" />
-				<TextBlock Text="Replace" Width="65" VerticalAlignment="Center" /><TextBox x:Name="ReplaceBox" Padding="5" AutomationProperties.Name="Replacement text" />
+				<Button x:Name="ReplaceAllButton" DockPanel.Dock="Right" Content="Replace all" Click="ReplaceAll_Click" />
+				<Button DockPanel.Dock="Right" Content="Replace" Click="Replace_Click" />
+				<TextBlock Text="Replace" Width="65" VerticalAlignment="Center" />
+				<TextBox x:Name="ReplaceBox" Padding="5" AutomationProperties.Name="Replacement text" />
 			</DockPanel>
 		</Grid>
 		<Grid Grid.Row="4">
-			<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
 			<TextBlock x:Name="ImportNote" Background="#FFF4D5" Foreground="#725C12" Padding="10" TextWrapping="Wrap" Visibility="Collapsed" />
 			<ScrollViewer x:Name="PageScroll" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#E8ECEF">
 				<RichTextBox x:Name="Editor" Width="816" MinHeight="680" Margin="20" Background="White" BorderBrush="#C9CED3" BorderThickness="1"
 								AcceptsTab="True" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled"
 								TextChanged="Editor_TextChanged" SelectionChanged="Editor_SelectionChanged" AutomationProperties.Name="Document editor">
-					<RichTextBox.LayoutTransform><ScaleTransform x:Name="EditorScale" ScaleX="1" ScaleY="1" /></RichTextBox.LayoutTransform>
+					<RichTextBox.LayoutTransform>
+						<ScaleTransform x:Name="EditorScale" ScaleX="1" ScaleY="1" />
+					</RichTextBox.LayoutTransform>
 				</RichTextBox>
 			</ScrollViewer>
 		</Grid>
 		<DockPanel Grid.Row="5" Margin="10,7">
-			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><TextBlock x:Name="ZoomLabel" Text="100%" VerticalAlignment="Center" Margin="8,0" /><Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100" Width="150" TickFrequency="10" ValueChanged="Zoom_Changed" ToolTip="Zoom" /></StackPanel>
+			<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+				<TextBlock x:Name="ZoomLabel" Text="100%" VerticalAlignment="Center" Margin="8,0" />
+				<Slider x:Name="ZoomSlider" Minimum="50" Maximum="200" Value="100" Width="150" TickFrequency="10" ValueChanged="Zoom_Changed" ToolTip="Zoom" />
+			</StackPanel>
 			<TextBlock x:Name="StatusText" Text="Ready" Foreground="#4B5563" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 		</DockPanel>
 	</Grid>
